@@ -19,8 +19,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private Renderer characterRenderer;
 
     [Header("Camera Config")]
-    [SerializeField] private float sensitivityX = 100f;
-    [SerializeField] private float sensitivityY = 100f;
+    [SerializeField] private float sensitivityX = 1f;
+    [SerializeField] private float sensitivityY = 1f;
     [SerializeField] private float followSpeed = 0.1f;
     [SerializeField] private float zoomSpeed = 1f;
     [SerializeField] private float minZoom = 2f;
@@ -40,6 +40,8 @@ public class CameraController : MonoBehaviour
 
     private readonly float minCameraAngle = -85f;
     private readonly float maxCameraAngle = 85f;
+    
+    private const float SENSITIVITY_CONST = 100f;
 
     private void Start()
     {
@@ -136,8 +138,8 @@ public class CameraController : MonoBehaviour
 
     private void RotateCamera()
     {
-        var horizontalInput = Input.GetAxis("Mouse X") * sensitivityX * Time.deltaTime;
-        var verticalInput = Input.GetAxis("Mouse Y") * sensitivityY * Time.deltaTime;
+        var horizontalInput = Input.GetAxis("Mouse X") * sensitivityX * SENSITIVITY_CONST * Time.deltaTime;
+        var verticalInput = Input.GetAxis("Mouse Y") * sensitivityY * SENSITIVITY_CONST * Time.deltaTime;
 
         rotHorizontal += horizontalInput;
         rotVertical -= verticalInput;
@@ -165,6 +167,11 @@ public class CameraController : MonoBehaviour
     public bool IsInFirstPerson()
     {
         return cameraState == CameraState.FIRST_PERSON;
+    }
+
+    public Quaternion GetCameraRotation()
+    {
+        return cameraTransform.rotation;
     }
     
     private void CameraCollisions()

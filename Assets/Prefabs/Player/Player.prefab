@@ -128,6 +128,7 @@ GameObject:
   - component: {fileID: 7611039256020367453}
   - component: {fileID: 7611039256020367448}
   - component: {fileID: 8711057678295884039}
+  - component: {fileID: 7611039256340588993}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -210,8 +211,8 @@ MonoBehaviour:
   cameraTransform: {fileID: 963194228}
   characterTransform: {fileID: 7611039256020367451}
   characterRenderer: {fileID: 7218005806406544794}
-  sensitivityX: 100
-  sensitivityY: 100
+  sensitivityX: 3
+  sensitivityY: 3
   followSpeed: 0.1
   zoomSpeed: 0.1
   minZoom: 2
@@ -220,6 +221,21 @@ MonoBehaviour:
   collisionLayers:
     serializedVersion: 2
     m_Bits: 83
+--- !u!114 &7611039256340588993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7611039256020367452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbe670f9cb14936478d8ace571b508e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactionOrigin: {fileID: 5210095605064203490}
+  interactionDistance: 1
+  interactionRadius: 0.1
 --- !u!1001 &7611039255621488925
 PrefabInstance:
   m_ObjectHideFlags: 0
