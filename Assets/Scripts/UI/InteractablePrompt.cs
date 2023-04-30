@@ -4,64 +4,53 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
-public class InteractablePrompt : MonoBehaviour
+public class InteractablePrompt : MonoBehaviour, IPrompt
 {
-    private enum PromptType
-    {
-        NONE,
-        OPEN_DOOR,
-        INTERACT
-    }
-
-    [SerializeField] private IInteractable interactable;
     [SerializeField] private Transform promptTarget;
-    [SerializeField] private CanvasGroup promptCanvasGroup;
-    [SerializeField] private PromptType promptType;
     [SerializeField] private Camera mainCamera;
-    
-    private const KeyCode INTERACT_KEYCODE = KeyCode.E;
-    
+    [SerializeField] private float showDuration = 0.5f;
+
     private void Start()
     {
-        if (promptCanvasGroup == null)
-            promptCanvasGroup = GetComponent<CanvasGroup>();
-        
         if (mainCamera == null)
             mainCamera = Camera.main;
-
-        DOVirtual.DelayedCall(5f, ShowPrompt);
     }
 
     private void LateUpdate()
     {
-        if (promptTarget == null) return;
+        DirectPromptToCamera();
+    }
 
+    private void DirectPromptToCamera()
+    {
+        if (promptTarget == null) return;
+        
         transform.position = promptTarget.position;
         transform.rotation = mainCamera.transform.rotation;
     }
 
-    public void OnInteract()
+    public void ShowPrompt(Transform target)
     {
-        // TODO: after interaction, open door or something.
-        if (interactable == null) return;
-    }
-
-    public void ShowPrompt()
-    {
+        promptTarget = target;
+        
+        DirectPromptToCamera();
+        
         transform.localScale = Vector3.zero;
         
         gameObject.SetActive(true);
 
         transform.DOKill();
-        transform.DOScale(Vector3.one, 0.5f);
+        transform.DOScale(Vector3.one, showDuration);
     }
 
     public void HidePrompt()
     {
         transform.DOKill();
-        transform.DOScale(Vector3.zero, 0.5f).OnComplete(() =>
+        transform.DOScale(Vector3.zero, showDuration).OnComplete(() =>
         {
             gameObject.SetActive(false);
         });
+
+        promptTarget = null;
     }
 }

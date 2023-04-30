@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7065726670002008404}
   - component: {fileID: 3935273779616464761}
   - component: {fileID: 8164866556041496097}
-  - component: {fileID: 933564975250132446}
+  - component: {fileID: 8435802673541412315}
   m_Layer: 0
   m_Name: Frame
   m_TagString: Untagged
@@ -84,8 +84,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &933564975250132446
-BoxCollider:
+--- !u!64 &8435802673541412315
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -94,9 +94,10 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 0.2, y: 2.1, z: 1.5000001}
-  m_Center: {x: 0, y: 0.95, z: 0.65000004}
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -6360558719573625917, guid: 579865eb9a05dc44485940930e0a64af, type: 3}
 --- !u!1 &4722522738274855726
 GameObject:
   m_ObjectHideFlags: 0
@@ -107,6 +108,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5386892037056606612}
   - component: {fileID: 2866153409926942366}
+  - component: {fileID: 5887875627994449503}
   m_Layer: 0
   m_Name: InteractableDoor
   m_TagString: Untagged
@@ -145,6 +147,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   doorPivot: {fileID: 500835674033620633}
   doorHandlePivot: {fileID: 6779882733963475989}
+  interactionDuration: 1
+--- !u!65 &5887875627994449503
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4722522738274855726}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.1, y: 0.1, z: 0.1}
+  m_Center: {x: 0, y: 0.84, z: 0.46}
 --- !u!1 &5475488591711226648
 GameObject:
   m_ObjectHideFlags: 0

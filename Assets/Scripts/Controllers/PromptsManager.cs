@@ -4,19 +4,50 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class PromptsManager : MonoBehaviour
+public class PromptsManager : Singleton<PromptsManager>
 {
-    [SerializeField] private GameObject worldObjectsParent;
-
-    private List<IInteractable> interactables;
+    [SerializeField] private InteractablePrompt interactionPromptPrefab;
+    
     private List<IPrompt> prompts;
 
-    private void Start()
+    protected override void SingletonStarted()
     {
-        if (worldObjectsParent != null)
-            interactables = worldObjectsParent.GetComponentsInChildren<IInteractable>().ToList();
+        prompts = GetComponentsInChildren<IPrompt>(includeInactive: true).ToList();
+        
+        Debug.Log($"prompts: {prompts.Count}");
     }
-    
-    
-    // TODO: on update, hide or show prompts depending on distance.
+
+    public void ShowInteractPrompt(Transform target)
+    {
+        var interactionPrompt = GetInteractionPrompt();
+        if (interactionPrompt != null)
+        {
+            interactionPrompt.ShowPrompt(target);
+        }
+        else
+        {
+            Debug.LogWarning("Can't show interaction prompt! There are no interaction prompt instances.");
+        }
+    }
+
+    public void HideInteractPrompt()
+    {
+        var interactionPrompt = GetInteractionPrompt();
+        if (interactionPrompt != null)
+        {
+            interactionPrompt.HidePrompt();
+        }
+        else
+        {
+            Debug.LogWarning("Can't hide interaction prompt! There are no interaction prompt instances.");
+        }
+    }
+
+    private InteractablePrompt GetInteractionPrompt()
+    {
+        if (prompts == null || prompts.Count == 0) return null;
+        
+        // TODO: get prompt which is disabled. If no prompts available, create new instance.
+        return prompts.FirstOrDefault(x => x.GetType() == typeof(InteractablePrompt)) as InteractablePrompt;
+    }
 }

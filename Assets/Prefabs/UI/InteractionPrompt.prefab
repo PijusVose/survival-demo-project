@@ -150,9 +150,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   promptTarget: {fileID: 0}
-  promptCanvasGroup: {fileID: 1406203187627983652}
-  promptType: 1
   mainCamera: {fileID: 0}
+  showDuration: 0.3
 --- !u!1 &3033820818813611048
 GameObject:
   m_ObjectHideFlags: 0

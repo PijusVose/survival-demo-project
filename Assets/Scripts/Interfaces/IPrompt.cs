@@ -4,6 +4,6 @@ using UnityEngine;
 
 public interface IPrompt
 {
-    void ShowPrompt();
+    void ShowPrompt(Transform target);
     void HidePrompt();
 }
