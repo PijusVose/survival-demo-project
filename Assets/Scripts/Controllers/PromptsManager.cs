@@ -17,12 +17,15 @@ public class PromptsManager : Singleton<PromptsManager>
         Debug.Log($"prompts: {prompts.Count}");
     }
 
-    public void ShowInteractPrompt(Transform target)
+    public void ShowInteractPrompt(IInteractable interactable)
     {
         var interactionPrompt = GetInteractionPrompt();
         if (interactionPrompt != null)
         {
-            interactionPrompt.ShowPrompt(target);
+            if (interactable is MonoBehaviour interactableAsMono)
+            {
+                interactionPrompt.ShowPrompt(interactableAsMono.transform, interactable.PromptOffset);
+            }
         }
         else
         {

@@ -8,9 +8,22 @@ public class Door : MonoBehaviour, IInteractable
 {
     [SerializeField] private Transform doorPivot;
     [SerializeField] private Transform doorHandlePivot;
+    
     [SerializeField] private float interactionDuration = 1f;
-
+    [SerializeField] private Vector3 promptOffset;
+    [SerializeField] private KeyCode interactKey = KeyCode.E;
+    
     private bool isOpen;
+
+    public Vector3 PromptOffset
+    {
+        get => promptOffset;
+    }
+
+    public KeyCode InteractKey
+    {
+        get => interactKey;
+    }
 
     public void OnInteract()
     {

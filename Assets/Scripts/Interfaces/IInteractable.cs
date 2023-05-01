@@ -4,5 +4,7 @@ using UnityEngine;
 
 public interface IInteractable
 {
+    Vector3 PromptOffset { get; }
+    KeyCode InteractKey { get; }
     void OnInteract();
 }

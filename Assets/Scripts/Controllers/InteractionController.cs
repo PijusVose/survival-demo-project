@@ -9,7 +9,8 @@ public class InteractionController : MonoBehaviour
 {
     [SerializeField] private SphereCollider interactionCollider;
     [SerializeField] private Camera playerCamera;
-    
+
+    [SerializeField] private float minDotProduct;
     [SerializeField] private float interactionRadius;
 
     private PromptsManager promptsManager;
@@ -27,7 +28,7 @@ public class InteractionController : MonoBehaviour
 
     private void Update()
     {
-        CheckForBestInteractable();
+        CheckForClosestInteractable();
     }
 
     private void SetupCollider()
@@ -36,56 +37,62 @@ public class InteractionController : MonoBehaviour
         interactionCollider.radius = interactionRadius;
     }
 
-    private void CheckForBestInteractable()
+    private void CheckForClosestInteractable()
     {
         if (interactables == null || interactables.Count == 0) return;
 
-        MonoBehaviour chosenInteractable = null;
+        IInteractable targetInteractable = null;
         foreach (var interactable in interactables)
         {
-            if (interactable is MonoBehaviour interactableBehaviour)
-            {
-                var currDotProduct = GetDotProductFromCamera(interactableBehaviour.transform.position);
-                if (currDotProduct <= 0) continue;
-                
-                if (chosenInteractable == null)
-                {
-                    chosenInteractable = interactableBehaviour;
-
-                    continue;
-                }
-                
-                var lastDotProduct = GetDotProductFromCamera(chosenInteractable.transform.position);
-                if (currDotProduct > lastDotProduct)
-                    chosenInteractable = interactableBehaviour;
-            }
+            CheckForTargetInteractable(interactable, ref targetInteractable);
         }
 
         if (currentInteractObject == null)
         {
-            if (chosenInteractable != null)
-                promptsManager.ShowInteractPrompt(chosenInteractable.transform);
+            if (targetInteractable != null)
+                promptsManager.ShowInteractPrompt(targetInteractable);
         }
         else 
         {
-            if (chosenInteractable == null)
+            if (targetInteractable == null)
             {
                 promptsManager.HideInteractPrompt();
             }
-            else if (chosenInteractable != (MonoBehaviour)currentInteractObject)
+            else if (targetInteractable != currentInteractObject)
             {
-                promptsManager.ShowInteractPrompt(chosenInteractable.transform);
+                promptsManager.ShowInteractPrompt(targetInteractable);
             }
         }
-        
-        currentInteractObject = chosenInteractable != null ? chosenInteractable as IInteractable : null;
+
+        currentInteractObject = targetInteractable;
     }
 
-    private float GetDotProductFromCamera(Vector3 objectPosition)
+    private void CheckForTargetInteractable(IInteractable interactable, ref IInteractable targetInteractable)
     {
-        var dirVector = (objectPosition - playerCamera.transform.position).normalized;
+        if (interactable is MonoBehaviour interactableAsMono)
+        {
+            var currDotProduct = GetDotProductBetweenCamera(interactableAsMono.transform.position);
+            if (currDotProduct <= minDotProduct) return;
+                
+            if (targetInteractable == null)
+            {
+                targetInteractable = interactable;
+
+                return;
+            }
+
+            var targetPosition = ((MonoBehaviour)targetInteractable).transform.position;
+            var lastDotProduct = GetDotProductBetweenCamera(targetPosition);
+            if (currDotProduct > lastDotProduct)
+                targetInteractable = interactable;
+        }
+    }
+
+    private float GetDotProductBetweenCamera(Vector3 startPosition)
+    {
+        var dirFromPlayer = (startPosition - transform.position).normalized;
         
-        return Vector3.Dot(playerCamera.transform.forward, dirVector);
+        return Vector3.Dot(playerCamera.transform.forward, dirFromPlayer);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -104,12 +111,14 @@ public class InteractionController : MonoBehaviour
         var interactable = other.GetComponent<IInteractable>();
         if (interactable != null && interactables.Contains(interactable))
         {
+            interactables.Remove(interactable);
+            
             if (interactable == currentInteractObject)
             {
                 promptsManager.HideInteractPrompt();
+
+                currentInteractObject = null;
             }
-            
-            interactables.Remove(interactable);
         }
     }
 }

@@ -10,6 +10,8 @@ public class InteractablePrompt : MonoBehaviour, IPrompt
     [SerializeField] private Camera mainCamera;
     [SerializeField] private float showDuration = 0.5f;
 
+    private Vector3 promptOffset;
+    
     private void Start()
     {
         if (mainCamera == null)
@@ -25,13 +27,14 @@ public class InteractablePrompt : MonoBehaviour, IPrompt
     {
         if (promptTarget == null) return;
         
-        transform.position = promptTarget.position;
+        transform.position = promptTarget.position + promptOffset;
         transform.rotation = mainCamera.transform.rotation;
     }
 
-    public void ShowPrompt(Transform target)
+    public void ShowPrompt(Transform target, Vector3 offset)
     {
         promptTarget = target;
+        promptOffset = offset;
         
         DirectPromptToCamera();
         
