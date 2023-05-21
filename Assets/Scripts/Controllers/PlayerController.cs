@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerController : MonoBehaviour
 {
@@ -15,7 +17,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float jumpCooldown = 1f;
     [SerializeField] private float gravityValue = -9.81f;
     [SerializeField] private float turnSpeed = 1f;
-    [SerializeField] private float minLandHeight = 0.5f;
+    [SerializeField] private float minLandTime = 0.5f;
     [SerializeField] private float walkspeedAcceleration = 2f;
 
     [SerializeField] private Vector3 playerVelocity;
@@ -29,17 +31,30 @@ public class PlayerController : MonoBehaviour
     private float speedMultiplier;
     private float timeSinceJump;
     private float timeSinceUngrounded;
-    private float jumpStartY;
 
     private const float DEFAULT_WALKSPEED = 2f; // 2f is the speed where feet don't slide. Use this to adjust walk animation speed.
     private const float SPEED_RECOVERY_VALUE = 1f;
 
+    private readonly int ANIM_WALKSPEED_PARAM = Animator.StringToHash("WalkSpeed");
+    private readonly int ANIM_GROUNDED_PARAM = Animator.StringToHash("isGrounded");
+    private readonly int ANIM_FALLING_PARAM = Animator.StringToHash("isFalling");
+    private readonly int ANIM_MOVING_PARAM = Animator.StringToHash("isMoving");
+    private readonly int ANIM_LANDED_PARAM = Animator.StringToHash("Landed");
+    private readonly int ANIM_JUMP_PARAM = Animator.StringToHash("Jump");
+    private readonly int ANIM_DIRECTION_X_PARAM = Animator.StringToHash("directionX");
+    private readonly int ANIM_DIRECTION_Y_PARAM = Animator.StringToHash("directionY");
+    
     private void Start()
     {
         currentDirection = new Vector2(transform.forward.x, transform.forward.z);
     }
     
     private void Update()
+    {
+        DoMovement();
+    }
+
+    private void DoMovement()
     {
         if (speedMultiplier < 1f)
             speedMultiplier += Time.deltaTime * SPEED_RECOVERY_VALUE;
@@ -58,7 +73,7 @@ public class PlayerController : MonoBehaviour
                 if (isFalling)
                     speedMultiplier = 0.1f;
                 
-                characterAnimator.SetTrigger("Landed");
+                characterAnimator.SetTrigger(ANIM_LANDED_PARAM);
             }
 
             if (playerVelocity.y < 0)
@@ -68,17 +83,41 @@ public class PlayerController : MonoBehaviour
         if (!isGrounded && wasGrounded)
             timeSinceUngrounded = Time.time;
 
-        isFalling = !isGrounded && Time.time - timeSinceUngrounded > 0.4f;
+        isFalling = CheckIsFalling();
 
-        characterAnimator.SetBool("isGrounded", isGrounded);
+        characterAnimator.SetBool(ANIM_GROUNDED_PARAM, isGrounded);
         
         var horizontalInput = Input.GetAxis("Horizontal");
         var verticalInput = Input.GetAxis("Vertical");
         movementInput = new Vector2(horizontalInput, verticalInput);
 
-        currentDirection = Vector2.Lerp(currentDirection, movementInput, turnSpeed * Time.deltaTime);
+        if (cameraController.IsInFirstPerson())
+        {
+            currentDirection = movementInput;
+        }
+        else
+        {
+            currentDirection = Vector2.Lerp(currentDirection, movementInput, turnSpeed * Time.deltaTime);
+        }
+
+        CalculateMoveDirection(out Vector3 moveDir, horizontalInput, verticalInput);
         
-        Vector3 moveDir;
+        HandleRun();
+
+        // TODO: just normalize moveDir.
+        var movementVector = moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier; // Vector3.ClampMagnitude(moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier, Time.deltaTime * currentWalkspeed * speedMultiplier);
+        charController.Move(movementVector);
+
+        HandleJump();
+        AnimateMovement();
+        
+        wasGrounded = isGrounded;
+    }
+
+    private bool CheckIsFalling() => !isGrounded && Time.time - timeSinceUngrounded > minLandTime;
+
+    private void CalculateMoveDirection(out Vector3 moveDir, float horizontalInput, float verticalInput)
+    {
         if (cameraController.IsInFirstPerson())
         {
             moveDir = transform.right * horizontalInput + transform.forward * verticalInput;
@@ -95,16 +134,7 @@ public class PlayerController : MonoBehaviour
                 transform.rotation = Quaternion.Lerp(transform.rotation, goalRotation, turnSpeed * Time.deltaTime);
         }
         
-        HandleRun();
-
-        // TODO: just normalize moveDir.
-        var movementVector = Vector3.ClampMagnitude(moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier, Time.deltaTime * currentWalkspeed * speedMultiplier);
-        charController.Move(movementVector);
-
-        HandleJump();
-        AnimateMovement();
-        
-        wasGrounded = isGrounded;
+        moveDir.Normalize();
     }
     
     private void HandleRun()
@@ -129,7 +159,7 @@ public class PlayerController : MonoBehaviour
             
             playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
             
-            characterAnimator.SetTrigger("Jump");
+            characterAnimator.SetTrigger(ANIM_JUMP_PARAM);
         }
 
         playerVelocity.y += gravityValue * Time.deltaTime;
@@ -138,12 +168,13 @@ public class PlayerController : MonoBehaviour
 
     private void AnimateMovement()
     {
-        characterAnimator.SetBool("isFalling", isFalling);
-        characterAnimator.SetBool("isMoving", movementInput.magnitude > 0f);
+        characterAnimator.SetBool(ANIM_FALLING_PARAM, isFalling);
+        characterAnimator.SetBool(ANIM_MOVING_PARAM, movementInput.magnitude > 0f);
             
         // Adjust WalkSpeed parameter so that feet don't slide.
-        characterAnimator.SetFloat("WalkSpeed", (currentWalkspeed * speedMultiplier) / DEFAULT_WALKSPEED);
-        characterAnimator.SetFloat("directionX", currentDirection.x);
-        characterAnimator.SetFloat("directionY", currentDirection.y);
+        var walkspeed = (currentWalkspeed * speedMultiplier) / DEFAULT_WALKSPEED;
+        characterAnimator.SetFloat(ANIM_WALKSPEED_PARAM, walkspeed);
+        characterAnimator.SetFloat(ANIM_DIRECTION_X_PARAM, currentDirection.x);
+        characterAnimator.SetFloat(ANIM_DIRECTION_Y_PARAM, currentDirection.y);
     }
 }

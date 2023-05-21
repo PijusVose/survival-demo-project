@@ -29,12 +29,23 @@ public class InteractionController : MonoBehaviour
     private void Update()
     {
         CheckForClosestInteractable();
+        CheckForInteractKeyCode();
     }
 
     private void SetupCollider()
     {
         interactionCollider = GetComponent<SphereCollider>();
         interactionCollider.radius = interactionRadius;
+    }
+
+    private void CheckForInteractKeyCode()
+    {
+        if (currentInteractObject == null) return;
+
+        if (Input.GetKeyDown(currentInteractObject.InteractKey))
+        {
+            currentInteractObject.OnInteract();
+        }
     }
 
     private void CheckForClosestInteractable()

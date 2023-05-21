@@ -14,6 +14,7 @@ public class Door : MonoBehaviour, IInteractable
     [SerializeField] private KeyCode interactKey = KeyCode.E;
     
     private bool isOpen;
+    private bool isInteracting;
 
     public Vector3 PromptOffset
     {
@@ -27,11 +28,18 @@ public class Door : MonoBehaviour, IInteractable
 
     public void OnInteract()
     {
+        if (isInteracting) return;
+        
         var goalRotation = new Vector3(0f ,isOpen ? 0f : 90f ,0f);
         isOpen = !isOpen;
 
+        isInteracting = true;
+
         doorPivot.DOKill();
-        doorPivot.DOLocalRotate(goalRotation, interactionDuration);
+        doorPivot.DOLocalRotate(goalRotation, interactionDuration).OnComplete(() =>
+        {
+            isInteracting = false;
+        });
         
         // TODO: animate door handle.
     }

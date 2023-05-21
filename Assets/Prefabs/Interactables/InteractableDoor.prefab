@@ -108,8 +108,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5386892037056606612}
   - component: {fileID: 2866153409926942366}
-  - component: {fileID: 5887875627994449503}
-  m_Layer: 0
+  - component: {fileID: 6609560450841526049}
+  m_Layer: 8
   m_Name: InteractableDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -125,7 +125,7 @@ Transform:
   m_GameObject: {fileID: 4722522738274855726}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.792, y: 0.506, z: 0}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1.15}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7065726670002008404}
@@ -147,11 +147,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   doorPivot: {fileID: 500835674033620633}
   doorHandlePivot: {fileID: 6779882733963475989}
-  interactionDuration: 1
+  interactionDuration: 0.4
   promptOffset: {x: 0, y: 1.1, z: 0}
   interactKey: 101
---- !u!65 &5887875627994449503
-BoxCollider:
+--- !u!135 &6609560450841526049
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -161,8 +161,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.1, y: 1.7, z: 1}
-  m_Center: {x: 0, y: 0.84, z: 0}
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &5475488591711226648
 GameObject:
   m_ObjectHideFlags: 0
