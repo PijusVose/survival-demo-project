@@ -19,6 +19,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float turnSpeed = 1f;
     [SerializeField] private float minLandTime = 0.5f;
     [SerializeField] private float walkspeedAcceleration = 2f;
+    [SerializeField] private float runSpeedMultiplier = 2f;
 
     [SerializeField] private Vector3 playerVelocity;
     [SerializeField][ReadOnly] private bool isGrounded;
@@ -87,8 +88,8 @@ public class PlayerController : MonoBehaviour
 
         characterAnimator.SetBool(ANIM_GROUNDED_PARAM, isGrounded);
         
-        var horizontalInput = Input.GetAxis("Horizontal");
-        var verticalInput = Input.GetAxis("Vertical");
+        var horizontalInput = Input.GetAxisRaw("Horizontal");
+        var verticalInput =Input.GetAxisRaw("Vertical");
         movementInput = new Vector2(horizontalInput, verticalInput);
 
         if (cameraController.IsInFirstPerson())
@@ -103,8 +104,7 @@ public class PlayerController : MonoBehaviour
         CalculateMoveDirection(out Vector3 moveDir, horizontalInput, verticalInput);
         
         HandleRun();
-
-        // TODO: just normalize moveDir.
+        
         var movementVector = moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier; // Vector3.ClampMagnitude(moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier, Time.deltaTime * currentWalkspeed * speedMultiplier);
         charController.Move(movementVector);
 
@@ -141,7 +141,8 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            currentWalkspeed = Mathf.MoveTowards(currentWalkspeed, movementSpeed * 2f, Time.deltaTime * walkspeedAcceleration);
+            var runWalkspeed = movementSpeed * runSpeedMultiplier;
+            currentWalkspeed = Mathf.MoveTowards(currentWalkspeed, runWalkspeed, Time.deltaTime * walkspeedAcceleration);
         }
         else
         {
@@ -155,8 +156,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump") && isGrounded && canJump)
         {
             timeSinceJump = Time.time;
-            jumpStartY = transform.position.y;
-            
+
             playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
             
             characterAnimator.SetTrigger(ANIM_JUMP_PARAM);

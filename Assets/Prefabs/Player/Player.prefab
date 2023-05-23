@@ -429,8 +429,9 @@ MonoBehaviour:
   jumpCooldown: 1
   gravityValue: -19.81
   turnSpeed: 8
-  minLandHeight: 0.5
-  walkspeedAcceleration: 2.5
+  minLandTime: 0.5
+  walkspeedAcceleration: 5
+  runSpeedMultiplier: 2
   playerVelocity: {x: 0, y: 0, z: 0}
   isGrounded: 0
 --- !u!143 &7611039256020367448
@@ -446,7 +447,7 @@ CharacterController:
   serializedVersion: 2
   m_Height: 1.8
   m_Radius: 0.27
-  m_SlopeLimit: 45
+  m_SlopeLimit: 70
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
@@ -467,8 +468,8 @@ MonoBehaviour:
   cameraTransform: {fileID: 7587543418825874036}
   characterTransform: {fileID: 7611039256020367451}
   characterRenderer: {fileID: 7218005806406544794}
-  sensitivityX: 10
-  sensitivityY: 10
+  sensitivityX: 1
+  sensitivityY: 1
   followSpeed: 0.1
   zoomSpeed: 0.1
   minZoom: 2
