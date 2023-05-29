@@ -5,29 +5,36 @@ using JetBrains.Annotations;
 using UnityEngine;
 
 [RequireComponent(typeof(SphereCollider))]
-public class InteractionController : MonoBehaviour
+public class InteractionController : MonoBehaviour, IPlayerPlugin
 {
     [SerializeField] private SphereCollider interactionCollider;
-    [SerializeField] private Camera playerCamera;
 
     [SerializeField] private float minDotProduct;
     [SerializeField] private float interactionRadius;
 
+    private CameraController cameraController;
     private PromptsManager promptsManager;
     private List<IInteractable> interactables;
     private IInteractable currentInteractObject;
 
-    private void Start()
+    private bool isInitialized;
+    
+    public void Init()
     {
         interactables = new List<IInteractable>();
 
         SetupCollider();
         
         promptsManager = PromptsManager.Instance;
+        cameraController = CameraController.Instance;
+
+        isInitialized = true;
     }
 
     private void Update()
     {
+        if (!isInitialized) return;
+        
         CheckForClosestInteractable();
         CheckForInteractKeyCode();
     }
@@ -103,7 +110,7 @@ public class InteractionController : MonoBehaviour
     {
         var dirFromPlayer = (startPosition - transform.position).normalized;
         
-        return Vector3.Dot(playerCamera.transform.forward, dirFromPlayer);
+        return Vector3.Dot(cameraController.PlayerCamera.transform.forward, dirFromPlayer);
     }
 
     private void OnTriggerEnter(Collider other)

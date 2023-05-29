@@ -6,10 +6,13 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.SocialPlatforms.Impl;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IPlayerController
 {
+    // Public fields
+    
     [SerializeField] private CharacterController charController;
-    [SerializeField] private CameraController cameraController;
+    [SerializeField] private Transform characterTransform;
+    [SerializeField] private Renderer characterRenderer;
     [SerializeField] private Animator characterAnimator;
     
     [SerializeField] private float movementSpeed;
@@ -24,6 +27,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector3 playerVelocity;
     [SerializeField][ReadOnly] private bool isGrounded;
 
+    // Properties
+
+    public Transform CharacterTransform => characterTransform;
+    public Renderer CharacterRenderer => characterRenderer;
+
+    // Private fields
+
+    private CameraController cameraController;
+    private List<IPlayerPlugin> playerPlugins;
     private bool wasGrounded;
     private bool isFalling;
     private float currentWalkspeed;
@@ -33,9 +45,15 @@ public class PlayerController : MonoBehaviour
     private float timeSinceJump;
     private float timeSinceUngrounded;
 
+    private bool isInitialized;
+
+    // Constants
+    
     private const float DEFAULT_WALKSPEED = 2f; // 2f is the speed where feet don't slide. Use this to adjust walk animation speed.
     private const float SPEED_RECOVERY_VALUE = 1f;
 
+    // Animation parameters
+    
     private readonly int ANIM_WALKSPEED_PARAM = Animator.StringToHash("WalkSpeed");
     private readonly int ANIM_GROUNDED_PARAM = Animator.StringToHash("isGrounded");
     private readonly int ANIM_FALLING_PARAM = Animator.StringToHash("isFalling");
@@ -44,18 +62,28 @@ public class PlayerController : MonoBehaviour
     private readonly int ANIM_JUMP_PARAM = Animator.StringToHash("Jump");
     private readonly int ANIM_DIRECTION_X_PARAM = Animator.StringToHash("directionX");
     private readonly int ANIM_DIRECTION_Y_PARAM = Animator.StringToHash("directionY");
+
+    // PlayerController
     
-    private void Start()
+    public void Init()
     {
+        cameraController = CameraController.Instance;
         currentDirection = new Vector2(transform.forward.x, transform.forward.z);
+
+        GetPlugins();
+        InitPlugins();
+        
+        isInitialized = true;
     }
-    
+
     private void Update()
     {
+        if (!isInitialized) return;
+        
         DoMovement();
     }
 
-    private void DoMovement()
+    public void DoMovement()
     {
         if (speedMultiplier < 1f)
             speedMultiplier += Time.deltaTime * SPEED_RECOVERY_VALUE;
@@ -65,26 +93,16 @@ public class PlayerController : MonoBehaviour
         // TODO: fix isGrounded when jump on platform and is sliding. Landing animation is too slow.
         
         isGrounded = charController.isGrounded;
-        if (isGrounded)
-        {
-            if (!wasGrounded)
-            {
-                wasGrounded = true;
-                
-                if (isFalling)
-                    speedMultiplier = 0.1f;
-                
-                characterAnimator.SetTrigger(ANIM_LANDED_PARAM);
-            }
-
-            if (playerVelocity.y < 0)
-                playerVelocity.y = gravityValue * 0.1f;
-        }
-
+        
         if (!isGrounded && wasGrounded)
             timeSinceUngrounded = Time.time;
 
         isFalling = CheckIsFalling();
+        
+        // TODO: if was not falling, but just jumped, then don't slow down player. Also don't play land animation.
+        // Use HardLanded and Landed anim trigger.
+        
+        CheckGroundedState();
 
         characterAnimator.SetBool(ANIM_GROUNDED_PARAM, isGrounded);
         
@@ -112,6 +130,25 @@ public class PlayerController : MonoBehaviour
         AnimateMovement();
         
         wasGrounded = isGrounded;
+    }
+
+    private void CheckGroundedState()
+    {
+        if (isGrounded)
+        {
+            if (!wasGrounded)
+            {
+                wasGrounded = true;
+                
+                if (isFalling)
+                    speedMultiplier = 0.1f;
+                
+                characterAnimator.SetTrigger(ANIM_LANDED_PARAM);
+            }
+
+            if (playerVelocity.y < 0)
+                playerVelocity.y = gravityValue * 0.1f;
+        }
     }
 
     private bool CheckIsFalling() => !isGrounded && Time.time - timeSinceUngrounded > minLandTime;
@@ -176,5 +213,28 @@ public class PlayerController : MonoBehaviour
         characterAnimator.SetFloat(ANIM_WALKSPEED_PARAM, walkspeed);
         characterAnimator.SetFloat(ANIM_DIRECTION_X_PARAM, currentDirection.x);
         characterAnimator.SetFloat(ANIM_DIRECTION_Y_PARAM, currentDirection.y);
+    }
+
+    public float GetSpawnHeight() => (charController.height / 2f) + charController.skinWidth;
+
+    private void GetPlugins()
+    {
+        playerPlugins = new List<IPlayerPlugin>();
+        
+        foreach (var childComponent in gameObject.GetComponentsInChildren<MonoBehaviour>())
+        {
+            if (childComponent is IPlayerPlugin plugin)
+            {
+                playerPlugins.Add(plugin);
+            }
+        }
+    }
+    
+    private void InitPlugins()
+    {
+        foreach (var plugin in playerPlugins)         
+        {
+            plugin.Init();
+        }
     }
 }
