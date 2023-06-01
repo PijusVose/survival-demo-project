@@ -134,7 +134,7 @@ MonoBehaviour:
   jumpCooldown: 1
   gravityValue: -19.81
   turnSpeed: 8
-  minLandTime: 0.5
+  minLandTime: 0.7
   walkspeedAcceleration: 5
   runSpeedMultiplier: 2
   playerVelocity: {x: 0, y: 0, z: 0}

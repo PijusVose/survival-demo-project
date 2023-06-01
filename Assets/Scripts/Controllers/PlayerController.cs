@@ -59,6 +59,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private readonly int ANIM_FALLING_PARAM = Animator.StringToHash("isFalling");
     private readonly int ANIM_MOVING_PARAM = Animator.StringToHash("isMoving");
     private readonly int ANIM_LANDED_PARAM = Animator.StringToHash("Landed");
+    private readonly int ANIM_HARD_LANDED_PARAM = Animator.StringToHash("HardLanded");
     private readonly int ANIM_JUMP_PARAM = Animator.StringToHash("Jump");
     private readonly int ANIM_DIRECTION_X_PARAM = Animator.StringToHash("directionX");
     private readonly int ANIM_DIRECTION_Y_PARAM = Animator.StringToHash("directionY");
@@ -92,17 +93,10 @@ public class PlayerController : MonoBehaviour, IPlayerController
         
         // TODO: fix isGrounded when jump on platform and is sliding. Landing animation is too slow.
         
-        isGrounded = charController.isGrounded;
-        
-        if (!isGrounded && wasGrounded)
-            timeSinceUngrounded = Time.time;
-
-        isFalling = CheckIsFalling();
+        CheckGroundedState();
+        CheckFallingState();
         
         // TODO: if was not falling, but just jumped, then don't slow down player. Also don't play land animation.
-        // Use HardLanded and Landed anim trigger.
-        
-        CheckGroundedState();
 
         characterAnimator.SetBool(ANIM_GROUNDED_PARAM, isGrounded);
         
@@ -132,26 +126,51 @@ public class PlayerController : MonoBehaviour, IPlayerController
         wasGrounded = isGrounded;
     }
 
+    private void CheckFallingState()
+    {
+        if (!isGrounded && wasGrounded)
+            timeSinceUngrounded = Time.time;
+
+        isFalling = CheckIsFalling();
+        
+        characterAnimator.SetBool(ANIM_FALLING_PARAM, isFalling);
+    }
+    
     private void CheckGroundedState()
     {
-        if (isGrounded)
+        isGrounded = charController.isGrounded;
+        
+        CheckIfLanded();
+        
+        if (isGrounded && playerVelocity.y < 0)
         {
-            if (!wasGrounded)
-            {
-                wasGrounded = true;
-                
-                if (isFalling)
-                    speedMultiplier = 0.1f;
-                
-                characterAnimator.SetTrigger(ANIM_LANDED_PARAM);
-            }
-
-            if (playerVelocity.y < 0)
-                playerVelocity.y = gravityValue * 0.1f;
+            playerVelocity.y = gravityValue * 0.1f;
         }
     }
 
-    private bool CheckIsFalling() => !isGrounded && Time.time - timeSinceUngrounded > minLandTime;
+    private void CheckIfLanded()
+    {
+        // TODO: check for hard landing depending on Y velocity?
+        
+        if (isGrounded && !wasGrounded)
+        {
+            wasGrounded = true;
+
+            if (IsHardLanding())
+            {
+                speedMultiplier = 0.1f;
+                    
+                characterAnimator.SetTrigger(ANIM_HARD_LANDED_PARAM);
+            }
+            else
+            {
+                characterAnimator.SetTrigger(ANIM_LANDED_PARAM);
+            }
+        }
+    }
+    
+    private bool CheckIsFalling() => !isGrounded;
+    private bool IsHardLanding() => Time.time - timeSinceUngrounded >= minLandTime;
 
     private void CalculateMoveDirection(out Vector3 moveDir, float horizontalInput, float verticalInput)
     {
@@ -205,7 +224,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private void AnimateMovement()
     {
-        characterAnimator.SetBool(ANIM_FALLING_PARAM, isFalling);
         characterAnimator.SetBool(ANIM_MOVING_PARAM, movementInput.magnitude > 0f);
             
         // Adjust WalkSpeed parameter so that feet don't slide.
@@ -234,7 +252,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     {
         foreach (var plugin in playerPlugins)         
         {
-            plugin.Init();
+            plugin.Init(this);
         }
     }
 }

@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface IPlayerPlugin
 {
-    void Init();
+    void Init(IPlayerController playerController);
 }

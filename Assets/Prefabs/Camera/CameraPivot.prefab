@@ -87,7 +87,7 @@ MonoBehaviour:
   zoomSpeed: 0.1
   minZoom: 2
   maxZoom: 15
-  sphereRayRadius: 0.2
+  sphereRayRadius: 0.4
   collisionLayers:
     serializedVersion: 2
     m_Bits: 65

@@ -40,6 +40,7 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
     private float goalZoom;
     private float maxCollisionZoom;
     private float zoomVelocity;
+    private float lerpTime;
     private bool isColliding;
 
     private bool isInitialized;
@@ -109,9 +110,17 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
     {
         if (!isInitialized) return;
         if (playerSpawner == null) return;
-        
+
         if (cameraState == CameraState.THIRD_PERSON)
+        {
             CameraFollowCharacter();
+        }
+        else if (cameraState == CameraState.TRANSITION)
+        {
+            lerpTime += Time.deltaTime * 3f;
+            
+            ForcePivotPositionToHead();
+        }
     }
 
     private void SetupCameraOnPlayerSpawned(IPlayerController playerController)
@@ -141,6 +150,14 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
         HandleZoom();
     }
 
+    private void ForcePivotPositionToHead()
+    {
+        var targetPosition = playerController.CharacterTransform.position + cameraOffset;
+        var lerpToHead = Vector3.Lerp(cameraPivot.position, targetPosition, lerpTime);
+
+        cameraPivot.position = lerpToHead;
+    }
+
     private void SwitchViewType()
     {
         if (cameraState == CameraState.FIRST_PERSON)
@@ -156,7 +173,9 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
     private void SwitchToFirstPerson()
     {
         cameraState = CameraState.TRANSITION;
-            
+
+        lerpTime = 0f;  
+        
         cameraTransform.DOLocalMove(Vector3.zero, 0.4f).SetEase(Ease.InOutExpo).OnComplete(() =>
         {
             cameraState = CameraState.FIRST_PERSON;
@@ -201,12 +220,14 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
         playerController.CharacterRenderer.enabled = true;
 
         cameraTransform.localPosition = new Vector3(0f, 0f, -0.1f);
-        cameraTransform.DOLocalMove(new Vector3(0f, 0f, -goalZoom), 0.4f)
-            .SetEase(Ease.InOutExpo)
-            .OnComplete(() =>
-            {
-                cameraState = CameraState.THIRD_PERSON;
-            });
+        // cameraTransform.DOLocalMove(new Vector3(0f, 0f, -goalZoom), 0.4f)
+        //     .SetEase(Ease.InOutExpo)
+        //     .OnComplete(() =>
+        //     {
+        //         cameraState = CameraState.THIRD_PERSON;
+        //     });
+        
+        cameraState = CameraState.THIRD_PERSON;
     }
 
     private void RotateCamera()

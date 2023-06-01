@@ -12,15 +12,18 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
     [SerializeField] private float minDotProduct;
     [SerializeField] private float interactionRadius;
 
+    private IPlayerController playerController;
     private CameraController cameraController;
     private PromptsManager promptsManager;
+    
     private List<IInteractable> interactables;
     private IInteractable currentInteractObject;
 
     private bool isInitialized;
     
-    public void Init()
+    public void Init(IPlayerController playerController)
     {
+        this.playerController = playerController;
         interactables = new List<IInteractable>();
 
         SetupCollider();
