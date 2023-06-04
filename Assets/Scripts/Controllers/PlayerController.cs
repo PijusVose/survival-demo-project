@@ -1,11 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
-using UnityEngine.SocialPlatforms.Impl;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour, IPlayerController
 {
     // Public fields
@@ -15,15 +14,16 @@ public class PlayerController : MonoBehaviour, IPlayerController
     [SerializeField] private Renderer characterRenderer;
     [SerializeField] private Animator characterAnimator;
     
-    [SerializeField] private float movementSpeed;
-    [SerializeField] private float jumpHeight = 2f;
+    [SerializeField] private float movementSpeed; 
+    [SerializeField] private float jumpPower = 8f;
     [SerializeField] private float jumpCooldown = 1f;
     [SerializeField] private float gravityValue = -9.81f;
     [SerializeField] private float turnSpeed = 1f;
-    [SerializeField] private float minLandTime = 0.5f;
+    [SerializeField] private float minFallVelocity = -9f;
     [SerializeField] private float walkspeedAcceleration = 2f;
     [SerializeField] private float runSpeedMultiplier = 2f;
-
+    [SerializeField] private LayerMask groundedMask;
+    
     [SerializeField] private Vector3 playerVelocity;
     [SerializeField][ReadOnly] private bool isGrounded;
 
@@ -36,14 +36,14 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private CameraController cameraController;
     private List<IPlayerPlugin> playerPlugins;
-    private bool wasGrounded;
     private bool isFalling;
     private float currentWalkspeed;
     private Vector2 movementInput;
     private Vector2 currentDirection;
     private float speedMultiplier;
     private float timeSinceJump;
-    private float timeSinceUngrounded;
+    private float lastLandingVelocity;
+    private bool hasLanded;
 
     private bool isInitialized;
 
@@ -56,7 +56,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
     
     private readonly int ANIM_WALKSPEED_PARAM = Animator.StringToHash("WalkSpeed");
     private readonly int ANIM_GROUNDED_PARAM = Animator.StringToHash("isGrounded");
-    private readonly int ANIM_FALLING_PARAM = Animator.StringToHash("isFalling");
     private readonly int ANIM_MOVING_PARAM = Animator.StringToHash("isMoving");
     private readonly int ANIM_LANDED_PARAM = Animator.StringToHash("Landed");
     private readonly int ANIM_HARD_LANDED_PARAM = Animator.StringToHash("HardLanded");
@@ -91,12 +90,9 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
         speedMultiplier = Mathf.Clamp01(speedMultiplier);
         
-        // TODO: fix isGrounded when jump on platform and is sliding. Landing animation is too slow.
+        // TODO: CLEAN UP CODE AND MAKE IT MORE READABLE/UNDERSTANDABLE/OPTIMIZED.
         
         CheckGroundedState();
-        CheckFallingState();
-        
-        // TODO: if was not falling, but just jumped, then don't slow down player. Also don't play land animation.
 
         characterAnimator.SetBool(ANIM_GROUNDED_PARAM, isGrounded);
         
@@ -117,45 +113,41 @@ public class PlayerController : MonoBehaviour, IPlayerController
         
         HandleRun();
         
-        var movementVector = moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier; // Vector3.ClampMagnitude(moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier, Time.deltaTime * currentWalkspeed * speedMultiplier);
+        var movementVector = moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier;
         charController.Move(movementVector);
 
         HandleJump();
         AnimateMovement();
-        
-        wasGrounded = isGrounded;
     }
 
-    private void CheckFallingState()
+    private void FixedUpdate()
     {
-        if (!isGrounded && wasGrounded)
-            timeSinceUngrounded = Time.time;
+        if (hasLanded || isGrounded) return;
 
-        isFalling = CheckIsFalling();
-        
-        characterAnimator.SetBool(ANIM_FALLING_PARAM, isFalling);
+        if (IsLandingNextPhysicsFrame())
+        {
+            lastLandingVelocity = charController.velocity.y;
+
+            hasLanded = true;
+        }
     }
-    
+
     private void CheckGroundedState()
     {
-        isGrounded = charController.isGrounded;
+        isGrounded = IsGrounded();
         
         CheckIfLanded();
         
         if (isGrounded && playerVelocity.y < 0)
         {
-            playerVelocity.y = gravityValue * 0.1f;
+            playerVelocity.y = gravityValue * 0.15f;
         }
     }
 
     private void CheckIfLanded()
     {
-        // TODO: check for hard landing depending on Y velocity?
-        
-        if (isGrounded && !wasGrounded)
+        if (hasLanded)
         {
-            wasGrounded = true;
-
             if (IsHardLanding())
             {
                 speedMultiplier = 0.1f;
@@ -166,11 +158,41 @@ public class PlayerController : MonoBehaviour, IPlayerController
             {
                 characterAnimator.SetTrigger(ANIM_LANDED_PARAM);
             }
+            
+            hasLanded = false;
         }
     }
+
+    private bool IsLandingNextPhysicsFrame()
+    {
+        if (charController.velocity.y > 0f) return false;
+        
+        var startPosition = characterAnimator.transform.position;
+        var dist = Mathf.Abs(charController.velocity.y * Time.fixedDeltaTime);
+
+        return Physics.Raycast(startPosition, Vector3.down, out RaycastHit hit, dist, groundedMask);
+    }
     
-    private bool CheckIsFalling() => !isGrounded;
-    private bool IsHardLanding() => Time.time - timeSinceUngrounded >= minLandTime;
+    private bool IsHardLanding()
+    {
+        return hasLanded && lastLandingVelocity < minFallVelocity;
+    }
+
+    private bool IsGrounded()
+    {
+        var startPosition = characterAnimator.transform.position;
+        startPosition.y += charController.radius;
+        
+        return Physics.SphereCast(startPosition, charController.radius, Vector3.down, out RaycastHit hit, 0.15f, groundedMask);
+    }
+
+    private void OnDrawGizmos()
+    {
+        var startPosition = characterAnimator.transform.position;
+        startPosition.y += charController.radius;
+        
+        Gizmos.DrawSphere(startPosition, charController.radius);
+    }
 
     private void CalculateMoveDirection(out Vector3 moveDir, float horizontalInput, float verticalInput)
     {
@@ -213,7 +235,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
         {
             timeSinceJump = Time.time;
 
-            playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
+            playerVelocity.y += jumpPower;
             
             characterAnimator.SetTrigger(ANIM_JUMP_PARAM);
         }
