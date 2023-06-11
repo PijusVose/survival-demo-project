@@ -13,19 +13,19 @@ public class PlayerController : MonoBehaviour, IPlayerController
     [SerializeField] private Transform characterTransform;
     [SerializeField] private Renderer characterRenderer;
     [SerializeField] private Animator characterAnimator;
-    
+
     [SerializeField] private float movementSpeed; 
     [SerializeField] private float jumpPower = 8f;
     [SerializeField] private float jumpCooldown = 1f;
-    [SerializeField] private float gravityValue = -9.81f;
+    [SerializeField] private float gravityAcceleration = -19.81f;
     [SerializeField] private float turnSpeed = 1f;
-    [SerializeField] private float minFallVelocity = -9f;
+    [SerializeField] private float softLandVelocity = -7f;
     [SerializeField] private float walkspeedAcceleration = 2f;
     [SerializeField] private float runSpeedMultiplier = 2f;
     [SerializeField] private LayerMask groundedMask;
     
-    [SerializeField] private Vector3 playerVelocity;
-    [SerializeField][ReadOnly] private bool isGrounded;
+    [SerializeField] private float yVelocity;
+    [SerializeField] private bool isGrounded;
 
     // Properties
 
@@ -44,6 +44,8 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private float timeSinceJump;
     private float lastLandingVelocity;
     private bool hasLanded;
+    private bool wasGrounded;
+    private Vector3 lastPlayerPosition;
 
     private bool isInitialized;
 
@@ -51,6 +53,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     
     private const float DEFAULT_WALKSPEED = 2f; // 2f is the speed where feet don't slide. Use this to adjust walk animation speed.
     private const float SPEED_RECOVERY_VALUE = 1f;
+    private const float GROUNDED_GRAVITY_MULTIPLIER = 0.15f;
 
     // Animation parameters
     
@@ -112,35 +115,51 @@ public class PlayerController : MonoBehaviour, IPlayerController
         CalculateMoveDirection(out Vector3 moveDir, horizontalInput, verticalInput);
         
         HandleRun();
-        
-        var movementVector = moveDir * Time.deltaTime * currentWalkspeed * speedMultiplier;
-        charController.Move(movementVector);
-
         HandleJump();
+
+        var movementVector = moveDir * currentWalkspeed * speedMultiplier * Time.deltaTime;
+        movementVector.y = yVelocity * Time.deltaTime;
+        
+        charController.Move(movementVector);
+        
         AnimateMovement();
     }
 
     private void FixedUpdate()
     {
-        if (hasLanded || isGrounded) return;
-
-        if (IsLandingNextPhysicsFrame())
+        // TODO: calculate velocity from last position and current position.
+        var velocity = Vector3.Distance(charController.transform.position, lastPlayerPosition) / Time.fixedDeltaTime;
+        
+        isGrounded = charController.isGrounded;
+        if (!hasLanded && !isGrounded)
         {
-            lastLandingVelocity = charController.velocity.y;
-
-            hasLanded = true;
+            if (IsLandingNextPhysicsFrame())
+            {
+                lastLandingVelocity = charController.velocity.y;
+                
+                Debug.Log($"Landing next frame with velocity: {velocity}");
+        
+                hasLanded = true;
+            }
         }
+
+        isGrounded = IsGrounded();
+        if (!wasGrounded && isGrounded)
+        {
+            Debug.Log($"Landing velocity: {velocity}");
+        }
+
+        wasGrounded = isGrounded;
+        lastPlayerPosition = charController.transform.position;
     }
 
     private void CheckGroundedState()
     {
-        isGrounded = IsGrounded();
-        
         CheckIfLanded();
         
-        if (isGrounded && playerVelocity.y < 0)
+        if (isGrounded && yVelocity < 0)
         {
-            playerVelocity.y = gravityValue * 0.15f;
+            yVelocity = gravityAcceleration * GROUNDED_GRAVITY_MULTIPLIER;
         }
     }
 
@@ -168,14 +187,15 @@ public class PlayerController : MonoBehaviour, IPlayerController
         if (charController.velocity.y > 0f) return false;
         
         var startPosition = characterAnimator.transform.position;
+        startPosition.y += charController.radius;
         var dist = Mathf.Abs(charController.velocity.y * Time.fixedDeltaTime);
 
-        return Physics.Raycast(startPosition, Vector3.down, out RaycastHit hit, dist, groundedMask);
+        return Physics.SphereCast(startPosition, charController.radius, Vector3.down, out RaycastHit hit, dist, groundedMask);
     }
-    
+
     private bool IsHardLanding()
     {
-        return hasLanded && lastLandingVelocity < minFallVelocity;
+        return hasLanded && lastLandingVelocity < softLandVelocity;
     }
 
     private bool IsGrounded()
@@ -183,15 +203,19 @@ public class PlayerController : MonoBehaviour, IPlayerController
         var startPosition = characterAnimator.transform.position;
         startPosition.y += charController.radius;
         
-        return Physics.SphereCast(startPosition, charController.radius, Vector3.down, out RaycastHit hit, 0.15f, groundedMask);
+        return Physics.SphereCast(startPosition, charController.radius, Vector3.down, out RaycastHit hit, 0.1f, groundedMask);
     }
 
     private void OnDrawGizmos()
     {
         var startPosition = characterAnimator.transform.position;
         startPosition.y += charController.radius;
+        var dist = 0.15f;
+        var endPosition = startPosition + dist * Vector3.down;
         
-        Gizmos.DrawSphere(startPosition, charController.radius);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(startPosition, charController.radius);
+        Gizmos.DrawWireSphere(endPosition, charController.radius);
     }
 
     private void CalculateMoveDirection(out Vector3 moveDir, float horizontalInput, float verticalInput)
@@ -230,19 +254,21 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private void HandleJump()
     {
-        var canJump = Time.time - timeSinceJump > jumpCooldown;
-        if (Input.GetButtonDown("Jump") && isGrounded && canJump)
+        if (Input.GetButtonDown("Jump") && CanJump())
         {
             timeSinceJump = Time.time;
-
-            playerVelocity.y += jumpPower;
+            
+            yVelocity += jumpPower;
             
             characterAnimator.SetTrigger(ANIM_JUMP_PARAM);
         }
 
-        playerVelocity.y += gravityValue * Time.deltaTime;
-        charController.Move(playerVelocity * Time.deltaTime);
+        yVelocity += gravityAcceleration * Time.deltaTime;
+
+        // charController.Move();
     }
+
+    private bool CanJump() => isGrounded && Time.time - timeSinceJump > jumpCooldown;
 
     private void AnimateMovement()
     {

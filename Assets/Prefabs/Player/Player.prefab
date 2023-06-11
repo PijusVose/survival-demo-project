@@ -130,17 +130,17 @@ MonoBehaviour:
   characterRenderer: {fileID: 7218005806406544794}
   characterAnimator: {fileID: 2794476527582466456}
   movementSpeed: 2.5
-  jumpPower: 8
+  jumpPower: 1
   jumpCooldown: 1
-  gravityValue: -19.81
+  gravityAcceleration: -19.81
   turnSpeed: 8
-  minFallVelocity: -9
+  softLandVelocity: -7
   walkspeedAcceleration: 5
   runSpeedMultiplier: 2
   groundedMask:
     serializedVersion: 2
     m_Bits: 375
-  playerVelocity: {x: 0, y: 0, z: 0}
+  yVelocity: 0
   isGrounded: 0
 --- !u!143 &7611039256020367448
 CharacterController:
