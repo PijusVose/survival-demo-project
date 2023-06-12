@@ -44,8 +44,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private float timeSinceJump;
     private float lastLandingVelocity;
     private bool hasLanded;
-    private bool wasGrounded;
-    private Vector3 lastPlayerPosition;
 
     private bool isInitialized;
 
@@ -127,9 +125,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     private void FixedUpdate()
     {
-        // TODO: calculate velocity from last position and current position.
-        var velocity = Vector3.Distance(charController.transform.position, lastPlayerPosition) / Time.fixedDeltaTime;
-        
         isGrounded = charController.isGrounded;
         if (!hasLanded && !isGrounded)
         {
@@ -137,20 +132,15 @@ public class PlayerController : MonoBehaviour, IPlayerController
             {
                 lastLandingVelocity = charController.velocity.y;
                 
-                Debug.Log($"Landing next frame with velocity: {velocity}");
+                // TODO: still some issues when falling of corner, maybe reduce landing raycast radius?
         
                 hasLanded = true;
             }
         }
-
-        isGrounded = IsGrounded();
-        if (!wasGrounded && isGrounded)
+        else if (isGrounded)
         {
-            Debug.Log($"Landing velocity: {velocity}");
+            hasLanded = false;
         }
-
-        wasGrounded = isGrounded;
-        lastPlayerPosition = charController.transform.position;
     }
 
     private void CheckGroundedState()
@@ -167,6 +157,8 @@ public class PlayerController : MonoBehaviour, IPlayerController
     {
         if (hasLanded)
         {
+            Debug.Log($"Has just landed with velocity: {lastLandingVelocity}.");
+            
             if (IsHardLanding())
             {
                 speedMultiplier = 0.1f;
@@ -257,15 +249,13 @@ public class PlayerController : MonoBehaviour, IPlayerController
         if (Input.GetButtonDown("Jump") && CanJump())
         {
             timeSinceJump = Time.time;
-            
+
             yVelocity += jumpPower;
             
             characterAnimator.SetTrigger(ANIM_JUMP_PARAM);
         }
 
         yVelocity += gravityAcceleration * Time.deltaTime;
-
-        // charController.Move();
     }
 
     private bool CanJump() => isGrounded && Time.time - timeSinceJump > jumpCooldown;
