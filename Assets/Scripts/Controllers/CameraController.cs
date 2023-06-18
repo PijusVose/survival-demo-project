@@ -195,7 +195,6 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
 
     private void ForceFirstPerson()
     {
-        cameraTransform.position = Vector3.zero;
         cameraState = CameraState.FIRST_PERSON;
 
         var lookVector = cameraTransform.forward;
@@ -204,9 +203,11 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
         playerController.CharacterTransform.localRotation = Quaternion.LookRotation(lookVector);
         playerController.CharacterRenderer.enabled = false;
                 
-        cameraPivot.SetParent(playerController.CharacterTransform);
+        cameraPivot.SetParent(playerController.CharacterTransform, false);
         cameraPivot.localPosition = cameraOffset;
         cameraPivot.localRotation = Quaternion.Euler(0, 0, 0);
+        
+        cameraTransform.localPosition = Vector3.zero;
     }
 
     private void SwitchToThirdPerson()

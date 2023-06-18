@@ -23,9 +23,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
     [SerializeField] private float walkspeedAcceleration = 2f;
     [SerializeField] private float runSpeedMultiplier = 2f;
     [SerializeField] private LayerMask groundedMask;
-    
-    [SerializeField] private float yVelocity;
-    [SerializeField] private bool isGrounded;
 
     // Properties
 
@@ -44,6 +41,8 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private float timeSinceJump;
     private float lastLandingVelocity;
     private bool hasLanded;
+    private float yVelocity;
+    private bool isGrounded;
 
     private bool isInitialized;
 
@@ -52,6 +51,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     private const float DEFAULT_WALKSPEED = 2f; // 2f is the speed where feet don't slide. Use this to adjust walk animation speed.
     private const float SPEED_RECOVERY_VALUE = 1f;
     private const float GROUNDED_GRAVITY_MULTIPLIER = 0.15f;
+    private const float SPHERE__RADIUS_MULTIPLIER = 0.95f;
 
     // Animation parameters
     
@@ -91,8 +91,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
         speedMultiplier = Mathf.Clamp01(speedMultiplier);
         
-        // TODO: CLEAN UP CODE AND MAKE IT MORE READABLE/UNDERSTANDABLE/OPTIMIZED.
-        
         CheckGroundedState();
 
         characterAnimator.SetBool(ANIM_GROUNDED_PARAM, isGrounded);
@@ -131,9 +129,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
             if (IsLandingNextPhysicsFrame())
             {
                 lastLandingVelocity = charController.velocity.y;
-                
-                // TODO: still some issues when falling of corner, maybe reduce landing raycast radius?
-        
+
                 hasLanded = true;
             }
         }
@@ -157,8 +153,6 @@ public class PlayerController : MonoBehaviour, IPlayerController
     {
         if (hasLanded)
         {
-            Debug.Log($"Has just landed with velocity: {lastLandingVelocity}.");
-            
             if (IsHardLanding())
             {
                 speedMultiplier = 0.1f;
@@ -182,20 +176,12 @@ public class PlayerController : MonoBehaviour, IPlayerController
         startPosition.y += charController.radius;
         var dist = Mathf.Abs(charController.velocity.y * Time.fixedDeltaTime);
 
-        return Physics.SphereCast(startPosition, charController.radius, Vector3.down, out RaycastHit hit, dist, groundedMask);
+        return Physics.SphereCast(startPosition, charController.radius * SPHERE__RADIUS_MULTIPLIER, Vector3.down, out RaycastHit hit, dist, groundedMask);
     }
 
     private bool IsHardLanding()
     {
         return hasLanded && lastLandingVelocity < softLandVelocity;
-    }
-
-    private bool IsGrounded()
-    {
-        var startPosition = characterAnimator.transform.position;
-        startPosition.y += charController.radius;
-        
-        return Physics.SphereCast(startPosition, charController.radius, Vector3.down, out RaycastHit hit, 0.1f, groundedMask);
     }
 
     private void OnDrawGizmos()
