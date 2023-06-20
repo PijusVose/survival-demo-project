@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
-public class PlayerSpawner : Singleton<PlayerSpawner>, IControllerPlugin
+public class PlayerSpawner : ControllerBase
 {
     // Public fields
     
@@ -26,10 +26,8 @@ public class PlayerSpawner : Singleton<PlayerSpawner>, IControllerPlugin
         isInitialized = true;
     }
 
-    protected override void SingletonStarted()
+    private void Start()
     {
-        base.SingletonStarted();
-        
         SpawnPlayer();
     }
 

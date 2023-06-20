@@ -2,13 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
     // Private fields
     
-    private List<IControllerPlugin> controllerPlugins;
+    private List<ControllerBase> controllers;
 
     // Events
     
@@ -17,38 +18,37 @@ public class GameController : MonoBehaviour
 
     // GameController
     
+    // TODO: I am just basically inventing dependency injection from scratch. Need to call Start and Awake functions from GameController for each controller.
+
     private void Awake()
     {
-        GetPlugins();
+        InitControllers();
         
         OnAwake?.Invoke();
     }
 
     private void Start()
     {
-        InitPlugins();
-        
         OnStart?.Invoke();
     }
 
-    private void GetPlugins()
+    private void GetControllers()
     {
-        controllerPlugins = new List<IControllerPlugin>();
-        
-        foreach (var childComponent in gameObject.GetComponentsInChildren<MonoBehaviour>())
-        {
-            if (childComponent is IControllerPlugin plugin)
-            {
-                controllerPlugins.Add(plugin);
-            }
-        }
+        controllers = FindObjectsOfType<ControllerBase>().ToList();
     }
 
-    private void InitPlugins()
+    public T GetController<T>() where T : ControllerBase
     {
-        foreach (var plugin in controllerPlugins)         
+        return controllers.OfType<T>().FirstOrDefault();
+    }
+
+    private void InitControllers()
+    {
+        GetControllers();
+        
+        foreach (var plugin in controllers)         
         {
-            plugin.Init();
+            plugin.Init(this);
         }
     }
 }

@@ -3,7 +3,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class CameraController : Singleton<CameraController>, IControllerPlugin
+public class CameraController : ControllerBase
 {
     public enum CameraState
     {
@@ -28,7 +28,8 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
     [SerializeField] private LayerMask collisionLayers;
 
     public Camera PlayerCamera => playerCamera;
-    
+
+    private GameController gameController;
     private PlayerSpawner playerSpawner;
     private IPlayerController playerController;
 
@@ -49,9 +50,11 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
     private readonly float maxCameraAngle = 85f;
     
     private const float SENSITIVITY_CONST = 100f;
-
-    public void Init()
+    
+    public override void Init(GameController gameController)
     {
+        this.gameController = gameController;
+
         Cursor.lockState = CursorLockMode.Locked;
 
         maxCollisionZoom = maxZoom;
@@ -62,7 +65,7 @@ public class CameraController : Singleton<CameraController>, IControllerPlugin
 
     private void OnEnable()
     {
-        playerSpawner = PlayerSpawner.Instance;
+        playerSpawner = gameController.GetController<PlayerSpawner>();
         
         SubscribeEvents();
     }

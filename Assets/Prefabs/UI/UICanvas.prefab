@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4196836075024812190}
   - component: {fileID: 3862113284030722938}
   - component: {fileID: 271303395103020830}
+  - component: {fileID: 3607698178046890669}
   m_Layer: 5
   m_Name: UICanvas
   m_TagString: Untagged
@@ -102,6 +103,19 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &3607698178046890669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6293428434264014216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fd8d72c8a03c4c45b0094d793b945f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blurBackground: {fileID: 7624351811093426675}
 --- !u!1 &7624351811093426675
 GameObject:
   m_ObjectHideFlags: 0
