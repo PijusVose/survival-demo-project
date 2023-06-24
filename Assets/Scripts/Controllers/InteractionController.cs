@@ -29,7 +29,7 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
         SetupCollider();
         
         promptsManager = PromptsManager.Instance;
-        cameraController = CameraController.Instance;
+        cameraController = playerController.GameController.GetController<CameraController>();
 
         isInitialized = true;
     }

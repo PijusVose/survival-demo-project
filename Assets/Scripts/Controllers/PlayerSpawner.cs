@@ -12,19 +12,16 @@ public class PlayerSpawner : ControllerBase
     // Private fields
     
     private PlayerController spawnedPlayer;
-
-    private bool isInitialized;
     
+    // Properties
+
+    public PlayerController Player => spawnedPlayer;
+
     // Events
 
     public event Action<PlayerController> OnPlayerSpawned;
     
     // PlayerSpawner
-    
-    public void Init()
-    {
-        isInitialized = true;
-    }
 
     private void Start()
     {
@@ -37,7 +34,7 @@ public class PlayerSpawner : ControllerBase
         var spawnPosition = transform.position + new Vector3(0f, spawnHeight, 0f);
         
         spawnedPlayer = Instantiate(playerPrefab, spawnPosition, transform.rotation);
-        spawnedPlayer.Init();
+        spawnedPlayer.Init(gameController);
         
         OnPlayerSpawned?.Invoke(spawnedPlayer);
     }

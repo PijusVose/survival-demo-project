@@ -5,18 +5,20 @@ using UnityEngine;
 public abstract class WindowBase : MonoBehaviour
 {
     [SerializeField] protected bool withBlur;
-    
+
+    protected GameController gameController;
     protected UIController uiController;
     protected bool isOpen;
 
     public bool IsOpen => isOpen;
 
-    public void Init(UIController uiController)
+    public virtual void Init(UIController uiController, GameController gameController)
     {
         this.uiController = uiController;
+        this.gameController = gameController;
     }
     
-    public void Open()
+    public virtual void Open()
     {
         if (withBlur)
             uiController.SetBlurState(true);
@@ -26,7 +28,7 @@ public abstract class WindowBase : MonoBehaviour
         isOpen = true;
     }
 
-    public void Close()
+    public virtual void Close()
     {
         if (withBlur)
             uiController.SetBlurState(false);

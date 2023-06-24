@@ -29,7 +29,6 @@ public class CameraController : ControllerBase
 
     public Camera PlayerCamera => playerCamera;
 
-    private GameController gameController;
     private PlayerSpawner playerSpawner;
     private IPlayerController playerController;
 
@@ -44,7 +43,7 @@ public class CameraController : ControllerBase
     private float lerpTime;
     private bool isColliding;
 
-    private bool isInitialized;
+    private bool isMovementEnabled;
 
     private readonly float minCameraAngle = -85f;
     private readonly float maxCameraAngle = 85f;
@@ -53,18 +52,20 @@ public class CameraController : ControllerBase
     
     public override void Init(GameController gameController)
     {
-        this.gameController = gameController;
+        base.Init(gameController);
 
         Cursor.lockState = CursorLockMode.Locked;
 
         maxCollisionZoom = maxZoom;
         playerCamera = Camera.main;
-        
-        isInitialized = true;
+
+        isMovementEnabled = true;
     }
 
-    private void OnEnable()
+    protected override void AwakeController()
     {
+        base.AwakeController();
+        
         playerSpawner = gameController.GetController<PlayerSpawner>();
         
         SubscribeEvents();
@@ -87,12 +88,16 @@ public class CameraController : ControllerBase
         playerSpawner.OnPlayerSpawned -= SetupCameraOnPlayerSpawned;
     }
 
+    public void SetCameraMovementState(bool state, bool freeMouse = false)
+    {
+        isMovementEnabled = state;
+
+        Cursor.lockState = freeMouse ? CursorLockMode.None : CursorLockMode.Locked;
+    }
+    
     private void Update()
     {
-        if (!isInitialized) return;
-        if (playerSpawner == null) return; // Cheesy fix to the issue of not having dependency injection.
-        
-        if (Input.GetKeyDown(KeyCode.C) && cameraState != CameraState.TRANSITION)
+        if (Input.GetKeyDown(KeyCode.C) && cameraState != CameraState.TRANSITION && isMovementEnabled)
         {
             SwitchViewType();
         }
@@ -102,7 +107,6 @@ public class CameraController : ControllerBase
 
     private void FixedUpdate()
     {
-        if (!isInitialized) return;
         if (playerSpawner == null) return;
         
         if (cameraState != CameraState.FIRST_PERSON)
@@ -111,7 +115,6 @@ public class CameraController : ControllerBase
 
     private void LateUpdate()
     {
-        if (!isInitialized) return;
         if (playerSpawner == null) return;
 
         if (cameraState == CameraState.THIRD_PERSON)
@@ -200,6 +203,8 @@ public class CameraController : ControllerBase
     {
         cameraState = CameraState.FIRST_PERSON;
 
+        rotVertical = 0f;
+        
         var lookVector = cameraTransform.forward;
         lookVector.y = 0;
                 
@@ -208,7 +213,7 @@ public class CameraController : ControllerBase
                 
         cameraPivot.SetParent(playerController.CharacterTransform, false);
         cameraPivot.localPosition = cameraOffset;
-        cameraPivot.localRotation = Quaternion.Euler(0, 0, 0);
+        cameraPivot.localRotation = Quaternion.identity;
         
         cameraTransform.localPosition = Vector3.zero;
     }
@@ -236,16 +241,19 @@ public class CameraController : ControllerBase
 
     private void RotateCamera()
     {
+        if (!isMovementEnabled) return;
+        
         var horizontalInput = Input.GetAxis("Mouse X") * sensitivityX * SENSITIVITY_CONST * Time.deltaTime;
         var verticalInput = Input.GetAxis("Mouse Y") * sensitivityY * SENSITIVITY_CONST * Time.deltaTime;
-
+        
         rotHorizontal += horizontalInput;
         rotVertical -= verticalInput;
         rotVertical = Mathf.Clamp(rotVertical, minCameraAngle, maxCameraAngle);
-        
+
         if (cameraState == CameraState.FIRST_PERSON)
         {
             cameraPivot.localRotation = Quaternion.Euler(rotVertical, 0, 0);
+            
             playerController.CharacterTransform.Rotate(Vector3.up * horizontalInput);
         }
         else

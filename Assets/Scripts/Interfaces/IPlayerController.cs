@@ -5,6 +5,7 @@ public interface IPlayerController
 {
     Transform CharacterTransform { get; }
     Renderer CharacterRenderer { get; }
-    void Init();
+    GameController GameController { get; }
+    void Init(GameController gameController);
     void DoMovement();
 }

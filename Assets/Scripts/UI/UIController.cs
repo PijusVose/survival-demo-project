@@ -11,15 +11,10 @@ public class UIController : ControllerBase
 
     private List<WindowBase> windows;
 
-    private GameController gameController;
-    
-    public override void Init(GameController gameController)
+    protected override void AwakeController()
     {
-        this.gameController = gameController;
-    }
-
-    private void Awake()
-    {
+        base.AwakeController();
+        
         InitWindows();
     }
 
@@ -72,7 +67,7 @@ public class UIController : ControllerBase
 
         foreach (var window in windows)       
         {
-            window.Init(this);
+            window.Init(this, gameController);
         }
     }
 }

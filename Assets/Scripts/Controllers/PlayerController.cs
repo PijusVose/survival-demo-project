@@ -28,23 +28,27 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     public Transform CharacterTransform => characterTransform;
     public Renderer CharacterRenderer => characterRenderer;
+    public GameController GameController => gameController;
 
     // Private fields
 
+    private GameController gameController;
     private CameraController cameraController;
     private List<IPlayerPlugin> playerPlugins;
-    private bool isFalling;
-    private float currentWalkspeed;
+    
     private Vector2 movementInput;
     private Vector2 currentDirection;
+    private float currentWalkspeed;
     private float speedMultiplier;
     private float timeSinceJump;
     private float lastLandingVelocity;
-    private bool hasLanded;
     private float yVelocity;
-    private bool isGrounded;
 
     private bool isInitialized;
+    private bool isInputEnabled;
+    private bool hasLanded;
+    private bool isGrounded;
+    private bool isFalling;
 
     // Constants
     
@@ -66,14 +70,16 @@ public class PlayerController : MonoBehaviour, IPlayerController
 
     // PlayerController
     
-    public void Init()
+    public void Init(GameController gameController)
     {
-        cameraController = CameraController.Instance;
+        this.gameController = gameController;
+        cameraController = gameController.GetController<CameraController>();
         currentDirection = new Vector2(transform.forward.x, transform.forward.z);
 
         GetPlugins();
         InitPlugins();
-        
+
+        isInputEnabled = true;
         isInitialized = true;
     }
 
@@ -97,32 +103,45 @@ public class PlayerController : MonoBehaviour, IPlayerController
         
         var horizontalInput = Input.GetAxisRaw("Horizontal");
         var verticalInput =Input.GetAxisRaw("Vertical");
-        movementInput = new Vector2(horizontalInput, verticalInput);
 
-        if (cameraController.IsInFirstPerson())
+        if (isInputEnabled)
         {
-            currentDirection = movementInput;
+            movementInput = new Vector2(horizontalInput, verticalInput);
+        
+            if (cameraController.IsInFirstPerson())
+            {
+                currentDirection = movementInput;
+            }
+            else
+            {
+                currentDirection = Vector2.Lerp(currentDirection, movementInput, turnSpeed * Time.deltaTime);
+            }
         }
         else
         {
-            currentDirection = Vector2.Lerp(currentDirection, movementInput, turnSpeed * Time.deltaTime);
+            movementInput = Vector2.zero;
         }
 
         CalculateMoveDirection(out Vector3 moveDir, horizontalInput, verticalInput);
+    
+        if (!isInputEnabled)
+            moveDir = Vector3.zero;
         
         HandleRun();
         HandleJump();
 
         var movementVector = moveDir * currentWalkspeed * speedMultiplier * Time.deltaTime;
         movementVector.y = yVelocity * Time.deltaTime;
-        
+    
         charController.Move(movementVector);
-        
+
         AnimateMovement();
     }
 
     private void FixedUpdate()
     {
+        if (!isInitialized) return;
+        
         isGrounded = charController.isGrounded;
         if (!hasLanded && !isGrounded)
         {
@@ -137,6 +156,11 @@ public class PlayerController : MonoBehaviour, IPlayerController
         {
             hasLanded = false;
         }
+    }
+
+    public void SetInputState(bool state)
+    {
+        isInputEnabled = state;
     }
 
     private void CheckGroundedState()
@@ -219,7 +243,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
     
     private void HandleRun()
     {
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift) && isInputEnabled)
         {
             var runWalkspeed = movementSpeed * runSpeedMultiplier;
             currentWalkspeed = Mathf.MoveTowards(currentWalkspeed, runWalkspeed, Time.deltaTime * walkspeedAcceleration);
@@ -244,7 +268,7 @@ public class PlayerController : MonoBehaviour, IPlayerController
         yVelocity += gravityAcceleration * Time.deltaTime;
     }
 
-    private bool CanJump() => isGrounded && Time.time - timeSinceJump > jumpCooldown;
+    private bool CanJump() => isGrounded && Time.time - timeSinceJump > jumpCooldown && isInputEnabled;
 
     private void AnimateMovement()
     {

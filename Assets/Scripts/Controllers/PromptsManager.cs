@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class PromptsManager : Singleton<PromptsManager>
 {
+    // TODO: change from singleton to dependency injection.
     [SerializeField] private InteractablePrompt interactionPromptPrefab;
     
     private List<IPrompt> prompts;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,18 +6,31 @@ using UnityEngine;
 public abstract class ControllerBase : MonoBehaviour
 {
     // TODO: add GameController variable, subscribe to Awake and Start methods.
+    protected GameController gameController;
+    protected bool isInitialized;
     
     public virtual void Init(GameController gameController)
     {
-        
+        this.gameController = gameController;
+
+        gameController.OnAwake += AwakeController;
+        gameController.OnStart += StartController;
+
+        isInitialized = true;
     }
 
-    public virtual void StartController()
+    private void OnDisable()
+    {
+        gameController.OnAwake -= AwakeController;
+        gameController.OnStart -= StartController;
+    }
+
+    protected virtual void StartController()
     {
         
     }
 
-    public virtual void AwakeController()
+    protected virtual void AwakeController()
     {
         
     }
