@@ -18,12 +18,11 @@ public class InventoryController : ControllerBase
         base.Init(gameController);
     }
 
-    public void AddItem(ItemConfigBase config, int count)
+    public void AddItem(ItemConfigBase config, int amount)
     {
-        var item = new Item(config);
-        item.
+        var item = new Item(config, amount);
 
-        OnItemAdded?.Invoke();
+        OnItemAdded?.Invoke(item);
     }
 
     public void DropItem()
