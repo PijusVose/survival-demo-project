@@ -13,12 +13,16 @@ public class ItemCell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     [SerializeField] private RectTransform greenHealthBar;
     
     [SerializeField] private Item storedItem;
-
-    private InventoryWindow inventoryWindow;
     
-    public void Init(InventoryWindow inventoryWindow)
+    private InventoryWindow inventoryWindow;
+    private int cellId;
+
+    public int CellIndex => cellId;
+    
+    public void Init(InventoryWindow inventoryWindow, int cellId)
     {
         this.inventoryWindow = inventoryWindow;
+        this.cellId = cellId;
     }
     
     public void PlaceItem()

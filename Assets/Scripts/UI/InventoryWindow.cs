@@ -6,19 +6,23 @@ public class InventoryWindow : WindowBase
 {
     private PlayerSpawner playerSpawner;
     private CameraController cameraController;
+    private InventoryController inventoryController;
 
     private ItemCell currentMouseOnCell;
     
     public override void Init(UIController uiController, GameController gameController)
     {
         base.Init(uiController, gameController);
-
+        
         playerSpawner = gameController.GetController<PlayerSpawner>();
         cameraController = gameController.GetController<CameraController>();
+        inventoryController = gameController.GetController<InventoryController>();
     }
 
     public override void Open()
     {
+        LoadInventory();
+        
         base.Open();
         
         playerSpawner.Player.SetInputState(false);
@@ -31,6 +35,19 @@ public class InventoryWindow : WindowBase
         
         playerSpawner.Player.SetInputState(true);
         cameraController.SetCameraMovementState(true);
+    }
+
+    private void LoadInventory()
+    {
+        foreach (var itemData in inventoryController.Items)
+        {
+            
+        }
+    }
+
+    private ItemCell GetCellByIndex(int index)
+    {
+        
     }
 
     // If mouse leaves cell, don't set to null?
