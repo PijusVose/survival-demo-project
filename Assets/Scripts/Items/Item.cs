@@ -5,21 +5,24 @@ using UnityEngine;
 public class Item
 {
     private int itemStack;
+    private int slotId;
     
     private readonly string itemId;
     private readonly ItemConfigBase itemConfig;
 
-    public Item(ItemConfigBase config, int stack)
+    public Item(ItemConfigBase config, int stack, int slotId)
     {
         itemId = System.Guid.NewGuid().ToString();
         
         itemConfig = config;
         itemStack = stack;
+        this.slotId = slotId;
     }
     
     public ItemConfigBase ItemConfig => itemConfig;
     public string ItemId => itemId;
     public int ItemStack => itemStack;
+    public int SlotId => slotId;
 
     public int IncreaseStack(int amount)
     {
