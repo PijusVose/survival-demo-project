@@ -2,17 +2,34 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InventoryWindow : WindowBase
 {
+    // Public fields
+    
     [SerializeField] private MaterialConfig materialConfig;
+
+    // TODO: add separate ItemCell for draggable cell.
+    [SerializeField] private GameObject dragCell;
+    [SerializeField] private Image dragCellIcon;
+    [SerializeField] private TextMeshProUGUI dragCellStackLabel;
+    [SerializeField] private GameObject dragCellHealthBar;
+    [SerializeField] private RectTransform dragCellGreenBar;
+    
+    [SerializeField] private int draggedSlotId;
+    
+    // Private fields
     
     private PlayerSpawner playerSpawner;
     private CameraController cameraController;
     private InventoryController inventoryController;
 
     private ItemCell currentMouseOnCell;
+    private bool isDraggingItem;
 
     private ItemCell[] itemCells;
     
@@ -63,7 +80,7 @@ public class InventoryWindow : WindowBase
     {
         if (!isOpen) return;
         
-        // DEBUG STUFF.
+#if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Y))
         {
             inventoryController.AddItem(materialConfig, 1);
@@ -71,6 +88,12 @@ public class InventoryWindow : WindowBase
         else if (Input.GetKeyDown(KeyCode.U))
         {
             inventoryController.AddItem(materialConfig, 10);
+        }
+#endif
+
+        if (Input.GetMouseButtonDown(0) && currentMouseOnCell != null)
+        {
+            // TODO: check if cell has item, the
         }
     }
 
@@ -81,6 +104,7 @@ public class InventoryWindow : WindowBase
     // 4. Each item has cell index assigned, so find the cell with that index and add item to that cell.
     private void LoadInventory()
     {
+        // TODO: use get component from cells parent.
         itemCells = GetComponentsInChildren<ItemCell>(includeInactive: true);
 
         if (itemCells.Length != InventoryController.MAX_SLOTS)
@@ -97,7 +121,7 @@ public class InventoryWindow : WindowBase
         }
     }
 
-    public void Inventory_OnItemAdded(int slotId, int amountAdded)
+    private void Inventory_OnItemAdded(int slotId, int amountAdded)
     {
         if (!isOpen) return;
         
@@ -113,16 +137,45 @@ public class InventoryWindow : WindowBase
         }
     }
     
-    public void Inventory_OnItemRemoved(int slotId, int amountRemoved)
+    private void Inventory_OnItemRemoved(int slotId, int amountRemoved)
     {
         if (!isOpen) return;
         
-        // TODO: remove item from slot.
+        if (slotId >= 0 && slotId < itemCells.Length)
+        {
+            var item = inventoryController.Items[slotId];
+            
+            itemCells[slotId].RemoveItem(item.ItemStack);
+        }
+        else
+        {
+            Debug.LogWarning($"Slot of ID {slotId} does not exist, could not remove item.");
+        }
     }
-    
-    private ItemCell GetCellByIndex(int index)
+
+    private void StartDragging()
     {
-        return itemCells.FirstOrDefault(x => x.CellIndex == index);
+        if (currentMouseOnCell != null)
+        {
+            draggedSlotId = currentMouseOnCell.CellIndex;
+            
+            dragCellIcon.sprite = currentMouseOnCell.StoredItem.ItemConfig.ItemIcon;
+            dragCellStackLabel.text = currentMouseOnCell.StoredItem.ItemStack.ToString();
+            
+            // TODO: show stack/healthbar depending on item type.
+            
+            dragCell.SetActive(true);
+
+            isDraggingItem = true;
+        }
+    }
+
+    private void StopDragging()
+    {
+        isDraggingItem = false;
+        // If there no UI object under, drop item from inventory.
+        // If there is another cell under, replace items.
+        // If cell is empty, just place item there.
     }
 
     // If mouse leaves cell, don't set to null?
@@ -131,7 +184,7 @@ public class InventoryWindow : WindowBase
     // Only if outside background drop item on ground.
     public void SetMouseOverCell(ItemCell cell)
     {
-        if (currentMouseOnCell != null)
+        if (currentMouseOnCell != null && currentMouseOnCell != cell)
         {
             // TODO: What to do in this situation? Maybe just force set mouse over cell?
         }
