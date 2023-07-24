@@ -14,7 +14,8 @@ public class InventoryWindow : WindowBase
     [SerializeField] private MaterialConfig materialConfig;
 
     // TODO: add separate ItemCell for draggable cell.
-    [SerializeField] private GameObject dragCell;
+    [SerializeField] private Canvas uiCanvas;
+    [SerializeField] private RectTransform dragCell;
     [SerializeField] private Image dragCellIcon;
     [SerializeField] private TextMeshProUGUI dragCellStackLabel;
     [SerializeField] private GameObject dragCellHealthBar;
@@ -28,7 +29,7 @@ public class InventoryWindow : WindowBase
     private CameraController cameraController;
     private InventoryController inventoryController;
 
-    private ItemCell currentMouseOnCell;
+    private int mouseOverCellId;
     private bool isDraggingItem;
 
     private ItemCell[] itemCells;
@@ -72,6 +73,9 @@ public class InventoryWindow : WindowBase
     {
         base.Close();
         
+        if (isDraggingItem)
+            StopDragging();
+        
         playerSpawner.Player.SetInputState(true);
         cameraController.SetCameraMovementState(true);
     }
@@ -91,9 +95,24 @@ public class InventoryWindow : WindowBase
         }
 #endif
 
-        if (Input.GetMouseButtonDown(0) && currentMouseOnCell != null)
+        // TODO: right click takes half of item.
+        if (Input.GetMouseButtonDown(0) && mouseOverCellId != -1 && !isDraggingItem)
         {
-            // TODO: check if cell has item, the
+            StartDragging();
+        }
+        else if (Input.GetMouseButtonUp(0) && isDraggingItem && mouseOverCellId != -1)
+        {
+            StopDragging();
+        }
+
+        if (isDraggingItem)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, 
+                Input.mousePosition, 
+                uiCanvas.worldCamera, 
+                out var canvasMousePosition);
+
+            dragCell.position = uiCanvas.transform.TransformPoint(canvasMousePosition);
         }
     }
 
@@ -116,6 +135,8 @@ public class InventoryWindow : WindowBase
 
             if (i < inventoryController.Items.Length && inventoryController.Items[i] != null)
             {
+                if (inventoryController.Items[i] == null) continue;
+                
                 itemCells[i].PlaceItem(inventoryController.Items[i]);
             }
         }
@@ -155,24 +176,39 @@ public class InventoryWindow : WindowBase
 
     private void StartDragging()
     {
-        if (currentMouseOnCell != null)
+        if (mouseOverCellId != -1)
         {
-            draggedSlotId = currentMouseOnCell.CellIndex;
+            var storedItem = inventoryController.Items[mouseOverCellId];
+            if (storedItem != null)
+            {
+                // TODO: remove item from cell visually.
+                
+                draggedSlotId = storedItem.SlotId;
             
-            dragCellIcon.sprite = currentMouseOnCell.StoredItem.ItemConfig.ItemIcon;
-            dragCellStackLabel.text = currentMouseOnCell.StoredItem.ItemStack.ToString();
+                dragCellIcon.sprite = storedItem.ItemConfig.ItemIcon;
+                dragCellStackLabel.text = storedItem.ItemStack.ToString();
             
-            // TODO: show stack/healthbar depending on item type.
+                dragCellIcon.gameObject.SetActive(true);
+                dragCellStackLabel.gameObject.SetActive(true);
+                dragCell.gameObject.SetActive(true);
             
-            dragCell.SetActive(true);
+                // TODO: show stack/healthbar depending on item type.
 
-            isDraggingItem = true;
+                isDraggingItem = true;
+            }
         }
     }
 
     private void StopDragging()
     {
         isDraggingItem = false;
+        
+        // TODO: drop/replace item.
+        
+        dragCell.gameObject.SetActive(false);
+        dragCellIcon.gameObject.SetActive(false);
+        dragCellStackLabel.gameObject.SetActive(false);
+        
         // If there no UI object under, drop item from inventory.
         // If there is another cell under, replace items.
         // If cell is empty, just place item there.
@@ -182,15 +218,15 @@ public class InventoryWindow : WindowBase
     // Make IPointerEnter/Exit for background as well?
     // So if released between cells, item goes to last entered cell or something.
     // Only if outside background drop item on ground.
-    public void SetMouseOverCell(ItemCell cell)
+    public void SetMouseOverCell(int cellId)
     {
-        if (currentMouseOnCell != null && currentMouseOnCell != cell)
+        if (mouseOverCellId != -1 && mouseOverCellId != cellId)
         {
             // TODO: What to do in this situation? Maybe just force set mouse over cell?
         }
         else
         {
-            currentMouseOnCell = cell;
+            mouseOverCellId = cellId;
         }
     }
 }

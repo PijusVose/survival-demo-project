@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -70,11 +71,11 @@ public class ItemCell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        inventoryWindow.SetMouseOverCell(this);
+        inventoryWindow.SetMouseOverCell(cellId);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        inventoryWindow.SetMouseOverCell(null);
+        inventoryWindow.SetMouseOverCell(-1);
     }
 }
