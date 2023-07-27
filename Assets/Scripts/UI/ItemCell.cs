@@ -26,38 +26,45 @@ public class ItemCell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         this.inventoryWindow = inventoryWindow;
         this.cellId = cellId;
     }
-    
-    public void PlaceItem(Item item)
-    {
-        // TODO: check item type, enable/disable healthbar and stack label.
-        
-        itemIcon.sprite = item.ItemConfig.ItemIcon;
-        itemIcon.gameObject.SetActive(true);
-        
-        itemStackLabel.gameObject.SetActive(true);
-        itemStackLabel.text = item.ItemStack.ToString();
 
-        storedItem = item;
-    }
-
-    public void RemoveItem(int totalStack)
+    public void UpdateSlotItem(Item item)
     {
-        if (totalStack == 0)
+        // TODO: refactor this, use Update, Add and Remove functions.
+        if (item == null)
         {
             ResetCell();
 
             storedItem = null;
+
+            return;
+        }
+        
+        if (storedItem == null || storedItem.ItemId != item.ItemId)
+        {
+            // TODO: specific handling for non-material items like armor, weapons etc.
+            // TODO: Update health bars and so on.
+            
+            itemIcon.sprite = item.ItemConfig.ItemIcon;
+            itemIcon.gameObject.SetActive(true);
+        
+            itemStackLabel.gameObject.SetActive(true);
+            itemStackLabel.text = item.ItemStack.ToString();
+
+            storedItem = item;
         }
         else
         {
-            itemStackLabel.text = totalStack.ToString();
-        }
-    }
+            if (item.ItemStack == 0)
+            {
+                ResetCell();
 
-    public void UpdateItem(Item item)
-    {
-        // TODO: specific handling for non-material items like armor, weapons etc.
-        // TODO: Update health bars and so on.
+                storedItem = null;
+            }
+            else
+            {
+                itemStackLabel.text = item.ItemStack.ToString();
+            }
+        }
     }
     
     private void ResetCell()

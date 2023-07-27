@@ -24,8 +24,17 @@ public class Item
     public ItemConfigBase ItemConfig => itemConfig;
     public string ItemId => itemId;
     public int ItemStack => itemStack;
-    public int SlotId => slotId;
 
+    public int SlotId
+    {
+        get => slotId;
+        set => slotId = value;
+    }
+    
+    public int AvailableSpace => itemConfig.MaxStack - itemStack;
+
+    public bool IsFullStack() => itemStack == itemConfig.MaxStack;
+    
     public int IncreaseStack(int amount)
     {
         var carry = 0;

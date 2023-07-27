@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class InventoryController : ControllerBase
 {
-    private Item[] itemsArray;
+    private List<Item> itemsHolder;
 
-    public Item[] Items => itemsArray;
+    public List<Item> Items => itemsHolder;
 
-    public event Action<int, int> OnItemAdded;
-    public event Action<int, int> OnItemRemoved;
+    public event Action<Item> OnItemAdded;
+    public event Action<Item> OnItemRemoved;
+    public event Action<Item> OnItemChanged;
 
     public const int MAX_SLOTS = 40;
 
@@ -19,57 +21,98 @@ public class InventoryController : ControllerBase
     {
         base.Init(gameController);
 
-        itemsArray = new Item[MAX_SLOTS];
+        itemsHolder = new List<Item>();
     }
 
     public int AddItem(ItemConfigBase config, int amount)
     {
-        // First iteration goes through slots which hold items of same type and fills them up.
-        for (int i = 0; i < itemsArray.Length; i++)
+        for (int i = 0; i < MAX_SLOTS; i++)
         {
-            if (itemsArray[i] != null &&
-                itemsArray[i].ItemConfig.ItemKey == config.ItemKey &&
-                itemsArray[i].ItemStack < config.MaxStack)
+            var existingItemWithSpace = FindItemOfTypeWithSpace(config);
+            if (existingItemWithSpace != null)
             {
-                int availableStack = config.MaxStack - itemsArray[i].ItemStack;
-                int stackToAdd = availableStack < amount ? availableStack : amount;
+                amount = existingItemWithSpace.IncreaseStack(amount);
                 
-                itemsArray[i].IncreaseStack(stackToAdd);
-                amount -= stackToAdd;
-                
-                OnItemAdded?.Invoke(i, stackToAdd);
-                
-                if (amount == 0) break;
+                OnItemChanged?.Invoke(existingItemWithSpace);
             }
-        }
-        
-        // Second iteration adds any left overs to empty slots.
-        if (amount > 0)
-        {
-            for (int i = 0; i < itemsArray.Length; i++)
+            else
             {
-                if (itemsArray[i] == null)
-                {
-                    var stackToAdd = Mathf.Min(amount, config.MaxStack);
-                    var addedItem = new Item(config, stackToAdd, i);
+                if (itemsHolder.Count == MAX_SLOTS)
+                    break;
 
-                    itemsArray[i] = addedItem;
+                var addedCount = Mathf.Clamp(amount, 0, config.MaxStack);
+                var freeSlotId = GetFreeSlotId();
+                var item = new Item(config, addedCount, freeSlotId);
 
-                    OnItemAdded?.Invoke(i, stackToAdd);
-                    
-                    amount -= stackToAdd;
-                }
-
-                if (amount == 0) break;
+                amount -= addedCount;
+                
+                // TODO: EVEN BETTER IDEA, CREATE SLOT CLASS YOU DUMBASS.
+                
+                itemsHolder.Add(item);
+                
+                OnItemAdded?.Invoke(item);
             }
+            
+            if (amount == 0)
+                break;
         }
 
         return amount;
     }
 
-    public void MoveItem(Item itemToMove, int targetSlot)
+    private Item FindItemOfTypeWithSpace(ItemConfigBase itemConfig)
     {
+        return itemsHolder.FirstOrDefault(x => x.ItemConfig == itemConfig && !x.IsFullStack());
+    }
+
+    public int GetFreeSlotId()
+    {
+        for (int i = 0; i < MAX_SLOTS; i++)
+        {
+            if (itemsHolder.All(x => x.SlotId != i))
+                return i;
+        }
+
+        return -1;
+    }
+
+    public Item GetItemInSlot(int slotId) =>
+        itemsHolder.FirstOrDefault(x => x.SlotId == slotId);
+
+    public void SwitchItems(Item firstItem, Item secondItem)
+    {
+        var firstSlotId = firstItem.SlotId;
+        var secondSlotId = secondItem.SlotId;
+
+        firstItem.SlotId = secondSlotId;
+        secondItem.SlotId = firstSlotId;
         
+        // Maybe call OnItemMoved?
+    }
+
+    public int MoveItem(Item itemToMove, int targetSlot)
+    {
+        var itemInSlot = GetItemInSlot(targetSlot);
+        var overflow = 0;
+        
+        if (itemInSlot == null)
+        {
+            itemToMove.SlotId = targetSlot;
+        
+            OnItemChanged?.Invoke(itemToMove);
+        }
+        else if (itemInSlot.ItemConfig.ItemKey == itemToMove.ItemConfig.ItemKey)
+        {
+            overflow = itemInSlot.IncreaseStack(itemToMove.ItemStack);
+            
+            OnItemChanged?.Invoke(itemToMove);
+        }
+        else
+        {
+            Debug.Log($"Could not move item to slot {targetSlot}. Slot already occupied");
+        }
+
+        return overflow;
     }
 
     public void DropItem()
