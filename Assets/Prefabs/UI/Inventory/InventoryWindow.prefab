@@ -239,7 +239,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   withBlur: 1
-  materialConfig: {fileID: 0}
+  firstMaterialConfig: {fileID: 11400000, guid: 627a1ecde7944194d89d29dcbad1a808, type: 2}
+  secondMaterialConfig: {fileID: 11400000, guid: e426f6e84ad7a874d96c7f65182f8bfe, type: 2}
   uiCanvas: {fileID: 0}
   dragCell: {fileID: 3457256134696577700}
   dragCellIcon: {fileID: 3787668466660072208}

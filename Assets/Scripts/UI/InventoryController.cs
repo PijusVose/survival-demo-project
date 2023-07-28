@@ -24,14 +24,64 @@ public class InventoryController : ControllerBase
         itemsHolder = new List<Item>();
     }
 
+    public void AddItemToSlot(Item item, int slotId)
+    {
+        var itemInSlot = GetItemInSlot(slotId);
+        if (itemInSlot != null)
+        {
+            if (itemInSlot.ItemConfig.ItemKey == item.ItemConfig.ItemKey && !itemInSlot.IsFullStack())
+            {
+                var leftover = itemInSlot.IncreaseStack(item.ItemStack);
+                
+                OnItemChanged?.Invoke(itemInSlot);
+                
+                if (leftover == 0)
+                {
+                    RemoveItem(item, item.ItemStack);
+                }
+                else
+                {
+                    var stackDiff = item.ItemStack - leftover;
+                    
+                    item.DecreaseStack(stackDiff);
+                    
+                    OnItemChanged?.Invoke(item);
+                }
+            }
+            else
+            {
+                SwitchItems(item, itemInSlot);
+            }
+        }
+        else
+        {
+            item.SlotId = slotId;
+        
+            OnItemChanged?.Invoke(item);
+        }
+    }
+
+    public void RemoveItem(Item item, int amount)
+    {
+        var leftover = item.DecreaseStack(amount);
+        if (leftover == 0)
+        {
+            item.SlotId = -1;
+            itemsHolder.Remove(item);
+        }
+
+        OnItemRemoved?.Invoke(item);
+    }
+
     public int AddItem(ItemConfigBase config, int amount)
     {
+        var leftover = amount;
         for (int i = 0; i < MAX_SLOTS; i++)
         {
             var existingItemWithSpace = FindItemOfTypeWithSpace(config);
             if (existingItemWithSpace != null)
             {
-                amount = existingItemWithSpace.IncreaseStack(amount);
+                leftover = existingItemWithSpace.IncreaseStack(leftover);
                 
                 OnItemChanged?.Invoke(existingItemWithSpace);
             }
@@ -40,20 +90,18 @@ public class InventoryController : ControllerBase
                 if (itemsHolder.Count == MAX_SLOTS)
                     break;
 
-                var addedCount = Mathf.Clamp(amount, 0, config.MaxStack);
+                var addedCount = Mathf.Clamp(leftover, 0, config.MaxStack);
                 var freeSlotId = GetFreeSlotId();
                 var item = new Item(config, addedCount, freeSlotId);
 
-                amount -= addedCount;
-                
-                // TODO: EVEN BETTER IDEA, CREATE SLOT CLASS YOU DUMBASS.
-                
+                leftover -= addedCount;
+
                 itemsHolder.Add(item);
                 
                 OnItemAdded?.Invoke(item);
             }
             
-            if (amount == 0)
+            if (leftover == 0)
                 break;
         }
 
@@ -79,40 +127,16 @@ public class InventoryController : ControllerBase
     public Item GetItemInSlot(int slotId) =>
         itemsHolder.FirstOrDefault(x => x.SlotId == slotId);
 
-    public void SwitchItems(Item firstItem, Item secondItem)
+    private void SwitchItems(Item firstItem, Item secondItem)
     {
         var firstSlotId = firstItem.SlotId;
         var secondSlotId = secondItem.SlotId;
-
+        
         firstItem.SlotId = secondSlotId;
         secondItem.SlotId = firstSlotId;
-        
-        // Maybe call OnItemMoved?
-    }
-
-    public int MoveItem(Item itemToMove, int targetSlot)
-    {
-        var itemInSlot = GetItemInSlot(targetSlot);
-        var overflow = 0;
-        
-        if (itemInSlot == null)
-        {
-            itemToMove.SlotId = targetSlot;
-        
-            OnItemChanged?.Invoke(itemToMove);
-        }
-        else if (itemInSlot.ItemConfig.ItemKey == itemToMove.ItemConfig.ItemKey)
-        {
-            overflow = itemInSlot.IncreaseStack(itemToMove.ItemStack);
-            
-            OnItemChanged?.Invoke(itemToMove);
-        }
-        else
-        {
-            Debug.Log($"Could not move item to slot {targetSlot}. Slot already occupied");
-        }
-
-        return overflow;
+           
+        OnItemChanged?.Invoke(firstItem);
+        OnItemChanged?.Invoke(secondItem);
     }
 
     public void DropItem()

@@ -5,14 +5,17 @@ using System.Linq;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class InventoryWindow : WindowBase
+public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHandler
 {
     // Public fields
     
-    [SerializeField] private MaterialConfig materialConfig;
-
+    [SerializeField] private MaterialConfig firstMaterialConfig;
+    [SerializeField] private MaterialConfig secondMaterialConfig;
+    
     // TODO: add separate ItemCell for draggable cell.
     [SerializeField] private Canvas uiCanvas;
     [SerializeField] private RectTransform dragCell;
@@ -30,6 +33,7 @@ public class InventoryWindow : WindowBase
     private Item draggedItem;
     private int mouseOverCellId = -1;
     private bool isDraggingItem;
+    private bool isMouseInInventory;
 
     private ItemCell[] itemCells;
     
@@ -88,11 +92,19 @@ public class InventoryWindow : WindowBase
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Y))
         {
-            inventoryController.AddItem(materialConfig, 1);
+            inventoryController.AddItem(firstMaterialConfig, 1);
         }
         else if (Input.GetKeyDown(KeyCode.U))
         {
-            inventoryController.AddItem(materialConfig, 10);
+            inventoryController.AddItem(firstMaterialConfig, 10);
+        }
+        else if (Input.GetKeyDown(KeyCode.H))
+        {
+            inventoryController.AddItem(secondMaterialConfig, 1);
+        }
+        else if (Input.GetKeyDown(KeyCode.J))
+        {
+            inventoryController.AddItem(secondMaterialConfig, 10);
         }
 #endif
         
@@ -190,26 +202,7 @@ public class InventoryWindow : WindowBase
 
         if (mouseOverCellId != -1 && draggedItem != null)
         {
-            var destinationSlotItem = inventoryController.GetItemInSlot(mouseOverCellId);
-            if (destinationSlotItem != null && destinationSlotItem != draggedItem)
-            {
-                // TODO: replace items in the backend also. Also add failsaves.
-                itemCells[draggedItem.SlotId].UpdateSlotItem(destinationSlotItem);
-                itemCells[destinationSlotItem.SlotId].UpdateSlotItem(draggedItem);
-                
-                inventoryController.SwitchItems(draggedItem, destinationSlotItem);
-            }
-            else if (destinationSlotItem != null && destinationSlotItem.ItemId == draggedItem.ItemId)
-            {
-                // TODO: add Failsave?
-                itemCells[mouseOverCellId].UpdateSlotItem(draggedItem);
-
-                // var overflow = inventoryController.MoveItem(draggedItem, mouseOverCellId);
-            }
-            else
-            {
-                itemCells[mouseOverCellId].UpdateSlotItem(draggedItem);
-            }
+            inventoryController.AddItemToSlot(draggedItem, mouseOverCellId);
         }
         else
         {
@@ -236,13 +229,23 @@ public class InventoryWindow : WindowBase
 
         draggedItem = null;
     }
-
-    // If mouse leaves cell, don't set to null?
-    // Make IPointerEnter/Exit for background as well?
-    // So if released between cells, item goes to last entered cell or something.
-    // Only if outside background drop item on ground.
+    
     public void SetMouseOverCell(int cellId)
     {
+        // TODO: some issue where item gets stuck in cell.
+        if (isMouseInInventory && cellId == -1)
+            return;
+        
         mouseOverCellId = cellId;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        isMouseInInventory = true;
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        isMouseInInventory = false;
     }
 }
