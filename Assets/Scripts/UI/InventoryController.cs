@@ -24,53 +24,89 @@ public class InventoryController : ControllerBase
         itemsHolder = new List<Item>();
     }
 
-    public void AddItemToSlot(Item item, int slotId)
+    public void AddItemToSlot(ItemInfo itemInfo, int slotId)
     {
         var itemInSlot = GetItemInSlot(slotId);
         if (itemInSlot != null)
         {
-            if (itemInSlot.ItemConfig.ItemKey == item.ItemConfig.ItemKey && !itemInSlot.IsFullStack())
+            if (itemInSlot.ItemConfig.ItemKey == itemInfo.itemConfig.ItemKey)
             {
-                var leftover = itemInSlot.IncreaseStack(item.ItemStack);
-                
-                OnItemChanged?.Invoke(itemInSlot);
-                
-                if (leftover == 0)
+                if (itemInSlot.IsFullStack())
                 {
-                    RemoveItem(item, item.ItemStack);
+                    AddItemToSlot(itemInfo, itemInfo.originalSlotId);
                 }
                 else
                 {
-                    var stackDiff = item.ItemStack - leftover;
-                    
-                    item.DecreaseStack(stackDiff);
-                    
-                    OnItemChanged?.Invoke(item);
+                    itemInfo.itemStack = itemInSlot.IncreaseStack(itemInfo.itemStack);
+                
+                    OnItemChanged?.Invoke(itemInSlot);
+
+                    if (itemInfo.itemStack > 0)
+                    {
+                        var originalItem = GetItemInSlot(itemInfo.originalSlotId);
+                        if (originalItem != null)
+                        {
+                            originalItem.IncreaseStack(itemInfo.itemStack);
+                        
+                            OnItemChanged?.Invoke(originalItem);
+                        }
+                        else
+                        {
+                            AddItem(itemInfo.itemConfig, itemInfo.itemStack);
+                        }
+                    }
                 }
             }
             else
             {
-                SwitchItems(item, itemInSlot);
+                if (itemInfo.originalSlotId != -1)
+                {
+                    var originalItem = GetItemInSlot(itemInfo.originalSlotId);
+                    if (originalItem != null)
+                    {
+                        originalItem.IncreaseStack(itemInfo.itemStack);
+                        
+                        OnItemChanged?.Invoke(originalItem);
+                    }
+                    else
+                    {
+                        itemInSlot.SlotId = itemInfo.originalSlotId;
+                    
+                        OnItemChanged?.Invoke(itemInSlot);
+
+                        var item = new Item(itemInfo.itemConfig, itemInfo.itemStack, slotId);
+                        itemsHolder.Add(item);
+                    
+                        OnItemAdded?.Invoke(item);
+                    }
+                }
+                else
+                {
+                    AddItem(itemInfo.itemConfig, itemInfo.itemStack);
+                }
             }
         }
         else
         {
-            item.SlotId = slotId;
-        
-            OnItemChanged?.Invoke(item);
+            var item = new Item(itemInfo.itemConfig, itemInfo.itemStack, slotId);
+            itemsHolder.Add(item);
+                    
+            OnItemAdded?.Invoke(item);
         }
     }
 
     public void RemoveItem(Item item, int amount)
     {
         var leftover = item.DecreaseStack(amount);
+        
+        OnItemRemoved?.Invoke(item);
+        
         if (leftover == 0)
         {
             item.SlotId = -1;
+            
             itemsHolder.Remove(item);
         }
-
-        OnItemRemoved?.Invoke(item);
     }
 
     public int AddItem(ItemConfigBase config, int amount)
@@ -122,6 +158,26 @@ public class InventoryController : ControllerBase
         }
 
         return -1;
+    }
+
+    public Item SplitItem(Item item)
+    {
+        var originalStack = item.ItemStack / 2;
+        var copiedStack = item.ItemStack - originalStack;
+
+        RemoveItem(item, copiedStack);
+
+        var copiedItem = CopyItem(item, copiedStack);
+
+        return copiedItem;
+    }
+
+    private Item CopyItem(Item item, int amount)
+    {
+        var copiedItem =  new Item(item.ItemConfig, amount, item.SlotId);
+        itemsHolder.Add(copiedItem);
+
+        return copiedItem;
     }
 
     public Item GetItemInSlot(int slotId) =>

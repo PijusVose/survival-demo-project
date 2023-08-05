@@ -17,6 +17,7 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
     [SerializeField] private MaterialConfig secondMaterialConfig;
     
     // TODO: add separate ItemCell for draggable cell.
+    [SerializeField] private RectTransform cellsHolder;
     [SerializeField] private Canvas uiCanvas;
     [SerializeField] private RectTransform dragCell;
     [SerializeField] private Image dragCellIcon;
@@ -30,10 +31,10 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
     private CameraController cameraController;
     private InventoryController inventoryController;
 
-    private Item draggedItem;
+    private ItemInfo dragItemInfo;
     private int mouseOverCellId = -1;
-    private bool isDraggingItem;
     private bool isMouseInInventory;
+    private bool isDragging;
 
     private ItemCell[] itemCells;
     
@@ -78,7 +79,7 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
     {
         base.Close();
         
-        if (isDraggingItem)
+        if (isDragging)
             CancelDragging();
         
         playerSpawner.Player.SetInputState(true);
@@ -108,17 +109,28 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
         }
 #endif
         
-        // TODO: right click takes half of item.
-        if (Input.GetMouseButtonDown(0) && mouseOverCellId != -1 && !isDraggingItem)
+        CheckForInput();
+        DoDragging();
+    }
+
+    private void CheckForInput()
+    {
+        if (Input.GetMouseButtonDown(0) && mouseOverCellId != -1 && !isDragging)
         {
             StartDragging();
         }
-        else if (Input.GetMouseButtonUp(0) && isDraggingItem)
+        else if (Input.GetMouseButtonUp(0) && isDragging)
         {
             StopDragging();
         }
-
-        DoDragging();
+        else if (Input.GetMouseButtonDown(1) && mouseOverCellId != -1 && !isDragging)
+        {
+            StartDragging(true);
+        }
+        else if (Input.GetMouseButtonUp(1) && isDragging)
+        {
+            StopDragging();
+        }
     }
 
     // 1. Get all item cells/slots
@@ -128,8 +140,7 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
     // 4. Each item has cell index assigned, so find the cell with that index and add item to that cell.
     private void LoadInventory()
     {
-        // TODO: use get component from cells parent.
-        itemCells = GetComponentsInChildren<ItemCell>(includeInactive: true);
+        itemCells = cellsHolder.GetComponentsInChildren<ItemCell>(includeInactive: true);
 
         if (itemCells.Length != InventoryController.MAX_SLOTS)
             Debug.LogWarning("Inventory window slots don't match actual inventory slots!");
@@ -154,15 +165,11 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
         {
             itemCells[item.SlotId].UpdateSlotItem(item);
         }
-        else
-        {
-            Debug.LogWarning($"Slot of ID {item.SlotId} does not exist, could not remove item.");
-        }
     }
 
     private void DoDragging()
     {
-        if (isDraggingItem)
+        if (isDragging)
         {
             RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, 
                 Input.mousePosition, 
@@ -173,69 +180,73 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
         }
     }
 
-    private void StartDragging()
+    private void StartDragging(bool isHalf = false)
     {
         if (mouseOverCellId != -1)
         {
-            draggedItem = inventoryController.GetItemInSlot(mouseOverCellId);
-            if (draggedItem != null)
+            var itemInSlot = inventoryController.GetItemInSlot(mouseOverCellId);
+            if (itemInSlot != null)
             {
-                itemCells[draggedItem.SlotId].UpdateSlotItem(null);
-            
-                dragCellIcon.sprite = draggedItem.ItemConfig.ItemIcon;
-                dragCellStackLabel.text = draggedItem.ItemStack.ToString();
+                var dragStack = isHalf ? itemInSlot.ItemStack / 2 : itemInSlot.ItemStack;
+                dragStack = Mathf.Max(1, dragStack);
+                
+                dragItemInfo = new ItemInfo(itemInSlot.ItemConfig, dragStack, itemInSlot.SlotId);
+
+                inventoryController.RemoveItem(itemInSlot, dragStack);
+
+                dragCellIcon.sprite = dragItemInfo.itemConfig.ItemIcon;
+                dragCellStackLabel.text = dragItemInfo.itemStack.ToString();
             
                 dragCellIcon.gameObject.SetActive(true);
                 dragCellStackLabel.gameObject.SetActive(true);
                 dragCell.gameObject.SetActive(true);
-            
+                
                 // TODO: show stack/healthbar depending on item type.
-
-                isDraggingItem = true;
+                
+                isDragging = true;
             }
         }
     }
 
     private void StopDragging()
     {
-        isDraggingItem = false;
+        isDragging = false;
 
-        if (mouseOverCellId != -1 && draggedItem != null)
+        if (mouseOverCellId != -1 && dragItemInfo != null)
         {
-            inventoryController.AddItemToSlot(draggedItem, mouseOverCellId);
+            inventoryController.AddItemToSlot(dragItemInfo, mouseOverCellId);
         }
         else
         {
-            // TODO: Drop item on the ground if mouse not above window.
-            CancelDragging(); // For now, just cancel dragging.
+            // TODO: Drop item on the ground if mouse not above window. For now, just cancel dragging.
+            CancelDragging();
         }
         
         dragCell.gameObject.SetActive(false);
         dragCellIcon.gameObject.SetActive(false);
         dragCellStackLabel.gameObject.SetActive(false);
 
-        draggedItem = null;
+        dragItemInfo = null;
     }
 
     private void CancelDragging()
     {
-        isDraggingItem = false;
+        isDragging = false;
         
-        itemCells[draggedItem.SlotId].UpdateSlotItem(draggedItem);
+        inventoryController.AddItemToSlot(dragItemInfo, dragItemInfo.originalSlotId);
         
         dragCell.gameObject.SetActive(false);
         dragCellIcon.gameObject.SetActive(false);
         dragCellStackLabel.gameObject.SetActive(false);
 
-        draggedItem = null;
+        dragItemInfo = null;
     }
     
     public void SetMouseOverCell(int cellId)
     {
-        // TODO: some issue where item gets stuck in cell.
         if (isMouseInInventory && cellId == -1)
             return;
-        
+
         mouseOverCellId = cellId;
     }
 
@@ -247,5 +258,7 @@ public class InventoryWindow : WindowBase, IPointerEnterHandler, IPointerExitHan
     public void OnPointerExit(PointerEventData eventData)
     {
         isMouseInInventory = false;
+
+        mouseOverCellId = -1;
     }
 }

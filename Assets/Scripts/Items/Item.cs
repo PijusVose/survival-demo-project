@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
@@ -14,7 +12,7 @@ public class Item
 
     public Item(ItemConfigBase config, int stack, int slotId)
     {
-        itemId = System.Guid.NewGuid().ToString();
+        itemId = Guid.NewGuid().ToString();
         
         itemConfig = config;
         itemStack = stack;
@@ -49,9 +47,9 @@ public class Item
 
     public int DecreaseStack(int amount)
     {
-        var carry = 0;
+        var carry = itemStack - amount;
 
-        if (itemStack - amount < 0)
+        if (carry < 0)
             carry = Mathf.Abs(itemStack - amount);
 
         itemStack = Mathf.Max(itemStack - amount, 0);
