@@ -117,6 +117,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blurBackground: {fileID: 7624351811093426675}
+  inventoryView: {fileID: 2763625513604485336}
 --- !u!1 &6725859080433934270
 GameObject:
   m_ObjectHideFlags: 0
@@ -127,7 +128,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6418656928524848264}
   m_Layer: 5
-  m_Name: KeybindingsPanel
+  m_Name: KeybindingsOverlay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -508,6 +509,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -490
       objectReference: {fileID: 0}
+    - target: {fileID: 665441167435359921, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}
+      propertyPath: uiCanvas
+      value: 
+      objectReference: {fileID: 4196836075024812190}
     - target: {fileID: 1294210937671555617, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -582,7 +587,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2209042758609665768, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}
       propertyPath: m_Name
-      value: InventoryWindow
+      value: InventoryView
       objectReference: {fileID: 0}
     - target: {fileID: 2209042758609665768, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}
       propertyPath: m_IsActive
@@ -1490,6 +1495,17 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}
+--- !u!114 &2763625513604485336 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1309036007190562205, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}
+  m_PrefabInstance: {fileID: 3778801095133893957}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d912a0981d80d643b364d556c93a3c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7883208567427839701 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6419379891372434320, guid: 072e9859bfa7b4847801de431799b5bc, type: 3}

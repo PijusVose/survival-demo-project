@@ -9,13 +9,34 @@ public class UIController : ControllerBase
 {
     [SerializeField] private GameObject blurBackground;
 
-    private List<WindowBase> windows;
+    [Header("Views")] 
+    [SerializeField] private InventoryView inventoryView;
 
+    private InventoryController inventoryController;
+    private CameraController cameraController;
+    private PlayerSpawner playerSpawner;
+    
     protected override void AwakeController()
     {
         base.AwakeController();
+
+        inventoryController = gameController.GetController<InventoryController>();
+        playerSpawner = gameController.GetController<PlayerSpawner>();
+        cameraController = gameController.GetController<CameraController>();
         
-        InitWindows();
+        InitViews();
+    }
+
+    private void InitViews()
+    {
+        if (inventoryView != null)
+        {
+            inventoryView.Init(this,
+                inventoryController.InventoryContainer,
+                cameraController,
+                playerSpawner,
+                inventoryController);
+        }
     }
 
     private void Update()
@@ -23,51 +44,23 @@ public class UIController : ControllerBase
         CheckForInput();
     }
 
-    public void SetBlurState(bool state)
-    {
-        blurBackground.SetActive(state);
-    }
-
     private void CheckForInput()
     {
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            var inventoryWindow = GetWindowOfType<InventoryWindow>();
-            if (inventoryWindow != null)
+            if (inventoryView.IsOpen)
             {
-                if (inventoryWindow.IsOpen)
-                {
-                    inventoryWindow.Close();
-                }
-                else
-                {
-                    inventoryWindow.Open();
-                }
+                inventoryView.Close();
             }
             else
             {
-                Debug.LogWarning("InventoryWindow was not opened/close. Could not retrieve InventoryWindow.");
+                inventoryView.Open();
             }
         }
     }
-
-    private void GetWindows()
+    
+    public void SetBlurState(bool state)
     {
-        windows = GetComponentsInChildren<WindowBase>(includeInactive: true).ToList();
-    }
-
-    public T GetWindowOfType<T>()
-    {
-        return windows.OfType<T>().FirstOrDefault();
-    }
-
-    private void InitWindows()
-    {
-        GetWindows();
-
-        foreach (var window in windows)       
-        {
-            window.Init(this, gameController);
-        }
+        blurBackground.SetActive(state);
     }
 }

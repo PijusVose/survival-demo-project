@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ItemCell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image itemIcon;
     [SerializeField] private TextMeshProUGUI itemStackLabel;
@@ -13,18 +13,18 @@ public class ItemCell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     
     [SerializeField] private Item storedItem;
     
-    private InventoryWindow inventoryWindow;
-    private int cellId;
+    private ContainerWindow containerWindow;
+    private int slotId;
 
-    public int CellIndex => cellId;
+    public int SlotId => slotId;
     public Item StoredItem => storedItem;
     
-    public void Init(InventoryWindow inventoryWindow, int cellId)
+    public void Init(ContainerWindow containerWindow, int slotId)
     {
         ResetCell();
         
-        this.inventoryWindow = inventoryWindow;
-        this.cellId = cellId;
+        this.containerWindow = containerWindow;
+        this.slotId = slotId;
     }
 
     public void UpdateSlotItem(Item item)
@@ -78,11 +78,11 @@ public class ItemCell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        inventoryWindow.SetMouseOverCell(cellId);
+        containerWindow.SetMouseOverSlot(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        inventoryWindow.SetMouseOverCell(-1);
+        containerWindow.SetMouseOverSlot(null);
     }
 }
