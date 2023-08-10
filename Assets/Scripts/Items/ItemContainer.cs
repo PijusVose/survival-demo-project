@@ -53,37 +53,30 @@ public class ItemContainer : MonoBehaviour
                         }
                         else
                         {
-                            AddItem(itemInfo.itemConfig, itemInfo.itemStack);
+                            AddItemToSlot(itemInfo, itemInfo.originalSlotId);
                         }
                     }
                 }
             }
             else
             {
-                if (itemInfo.originalSlotId != -1)
+                var originalSlotItem = GetItemInSlot(itemInfo.originalSlotId);
+                if (originalSlotItem != null)
                 {
-                    var originalItem = GetItemInSlot(itemInfo.originalSlotId);
-                    if (originalItem != null)
-                    {
-                        originalItem.IncreaseStack(itemInfo.itemStack);
-                        
-                        OnItemChanged?.Invoke(originalItem);
-                    }
-                    else
-                    {
-                        itemInSlot.SlotId = itemInfo.originalSlotId;
+                    originalSlotItem.IncreaseStack(itemInfo.itemStack);
                     
-                        OnItemChanged?.Invoke(itemInSlot);
-
-                        var item = new Item(itemInfo.itemConfig, itemInfo.itemStack, slotId);
-                        containerItems.Add(item);
-                    
-                        OnItemAdded?.Invoke(item);
-                    }
+                    OnItemChanged?.Invoke(originalSlotItem);
                 }
                 else
                 {
-                    AddItem(itemInfo.itemConfig, itemInfo.itemStack);
+                    itemInSlot.SlotId = itemInfo.originalSlotId;
+                    
+                    OnItemChanged?.Invoke(itemInSlot);
+
+                    var item = new Item(itemInfo.itemConfig, itemInfo.itemStack, slotId);
+                    containerItems.Add(item);
+                    
+                    OnItemAdded?.Invoke(item);
                 }
             }
         }

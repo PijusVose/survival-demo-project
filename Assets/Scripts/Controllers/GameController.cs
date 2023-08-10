@@ -5,7 +5,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class GameController : MonoBehaviour
+public class GameController : Singleton<GameController>
 {
     // Private fields
     
@@ -19,6 +19,7 @@ public class GameController : MonoBehaviour
     // GameController
     
     // TODO: I am just basically inventing dependency injection from scratch. Need to call Start and Awake functions from GameController for each controller.
+    // Also got tip from coworker to initialize all controller and start them from here in order.
 
     private void Awake()
     {

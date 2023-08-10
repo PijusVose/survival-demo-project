@@ -117,6 +117,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blurBackground: {fileID: 7624351811093426675}
+  uiCanvas: {fileID: 4196836075024812190}
   inventoryView: {fileID: 2763625513604485336}
 --- !u!1 &6725859080433934270
 GameObject:

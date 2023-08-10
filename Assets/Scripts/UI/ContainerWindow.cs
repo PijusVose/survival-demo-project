@@ -1,10 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
@@ -36,6 +33,8 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         this.container = container;
 
+        dragItemSlot.Init();
+        
         SubscribeToEvents();
     }
     
@@ -162,11 +161,11 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
                 var dragStack = isHalf ? itemInSlot.ItemStack / 2 : itemInSlot.ItemStack;
                 dragStack = Mathf.Max(1, dragStack);
                 
-                container.RemoveItem(itemInSlot, dragStack);
-                
                 var dragItemInfo = new ItemInfo(itemInSlot.ItemConfig, dragStack, itemInSlot.SlotId);
 
                 dragItemSlot.EnableDragSlot(dragItemInfo);
+                
+                container.RemoveItem(itemInSlot, dragStack);
                 
                 isDragging = true;
             }

@@ -19,6 +19,12 @@ public class DragItemSlot : MonoBehaviour
     public ItemInfo DraggedItemInfo => dragItemInfo;
     
     // TODO: Init with UiController and set canvas.
+
+    public void Init()
+    {
+        var uiController = GameController.Instance.GetController<UIController>();
+        uiCanvas = uiController.UICanvas;
+    }
     
     public void EnableDragSlot(ItemInfo itemInfo)
     {
@@ -27,10 +33,12 @@ public class DragItemSlot : MonoBehaviour
         slotIcon.sprite = itemInfo.itemConfig.ItemIcon;
         stackLabel.text = itemInfo.itemStack.ToString();
             
+        FollowMouse();
+        
         slotIcon.gameObject.SetActive(true);
         stackLabel.gameObject.SetActive(true);
         gameObject.SetActive(true);
-                
+        
         // TODO: show stack/healthbar depending on item type.
     }
 
@@ -47,7 +55,12 @@ public class DragItemSlot : MonoBehaviour
     private void Update()
     {
         if (dragItemInfo == null) return;
-        
+
+        FollowMouse();
+    }
+
+    private void FollowMouse()
+    {
         RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, 
             Input.mousePosition, 
             uiCanvas.worldCamera, 
