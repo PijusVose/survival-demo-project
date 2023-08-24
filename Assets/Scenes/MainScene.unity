@@ -550,10 +550,6 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: -10.12
       objectReference: {fileID: 0}
-    - target: {fileID: 4558812853188200797, guid: 6afa1344bde42dd4983e351b1ed4613e, type: 3}
-      propertyPath: far clip plane
-      value: 1000
-      objectReference: {fileID: 0}
     - target: {fileID: 7334529752987016086, guid: 6afa1344bde42dd4983e351b1ed4613e, type: 3}
       propertyPath: m_ClearDepth
       value: 1

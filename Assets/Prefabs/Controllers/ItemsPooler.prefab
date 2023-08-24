@@ -44,3 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f0580584860e8743bee8c9a445485d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemDropPrefab: {fileID: 9218410037968448962, guid: d97ac17182eaf6d41a298e46fb4e1aee, type: 3}
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 321

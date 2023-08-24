@@ -16,7 +16,7 @@ public class ItemContainer : MonoBehaviour
     public event Action<Item> OnItemChanged;
 
     public int AmountOfSlots => amountOfSlots;
-    public List<Item> GetItems() => containerItems;
+    public List<Item> ContainerItems() => containerItems;
     
     public void Init(int amountOfSlots)
     {
@@ -88,6 +88,11 @@ public class ItemContainer : MonoBehaviour
             OnItemAdded?.Invoke(item);
         }
     }
+
+    public bool IsContainerFull()
+    {
+        return containerItems.Count >= amountOfSlots && containerItems.All(x => x.IsFullStack());
+    }
     
     public void RemoveItem(Item item, int amount)
     {
@@ -103,8 +108,10 @@ public class ItemContainer : MonoBehaviour
         }
     }
 
-    public int AddItem(ItemConfigBase config, int amount)
+    public void AddItem(ItemConfigBase config, int amount)
     {
+        if (IsContainerFull()) return;
+        
         var leftover = amount;
         for (int i = 0; i < amountOfSlots; i++)
         {
@@ -134,8 +141,6 @@ public class ItemContainer : MonoBehaviour
             if (leftover == 0)
                 break;
         }
-
-        return amount;
     }
 
     private Item FindItemOfTypeWithSpace(ItemConfigBase itemConfig)
@@ -165,13 +170,4 @@ public class ItemContainer : MonoBehaviour
     public Item GetItemInSlot(int slotId) =>
         containerItems.FirstOrDefault(x => x.SlotId == slotId);
     
-    public void DropItem()
-    {
-        
-    }
-
-    public void DropAllItems()
-    {
-        
-    }
 }

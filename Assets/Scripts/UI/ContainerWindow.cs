@@ -16,7 +16,8 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     [SerializeField] private RectTransform backgroundRectTransform;
 
     private ItemContainer container;
-
+    private ItemsPooler itemsPooler;
+    
     private List<ItemSlot> itemSlots = new List<ItemSlot>();
     private ItemSlot mouseOverSlot;
     private bool isDragging;
@@ -32,7 +33,8 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void Init(ItemContainer container)
     {
         this.container = container;
-
+        itemsPooler = GameController.Instance.GetController<ItemsPooler>();
+        
         dragItemSlot.Init();
         
         SubscribeToEvents();
@@ -184,10 +186,12 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             if (!isMouseOverWindow)
             {
-                // TODO: Drop item on the ground if mouse not above window. For now, just cancel dragging.
+                itemsPooler.DropItem(dragItemSlot.DraggedItemInfo, container.transform.position);
             }
-            
-            CancelDragging();
+            else
+            {
+                CancelDragging();
+            }
         }
         
         dragItemSlot.DisableDragSlot();

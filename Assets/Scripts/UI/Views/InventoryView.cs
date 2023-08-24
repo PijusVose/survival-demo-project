@@ -64,7 +64,9 @@ public class InventoryView : MonoBehaviour
         isOpen = false;
         
         inventoryWindow.Close();
-        externalContainerWindow.Close();
+        
+        if (externalContainerWindow != null)
+            externalContainerWindow.Close();
         
         playerSpawner.Player.SetInputState(true);
         cameraController.SetCameraMovementState(true);
