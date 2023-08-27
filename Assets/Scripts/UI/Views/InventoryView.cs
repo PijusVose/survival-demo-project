@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class InventoryView : MonoBehaviour
@@ -23,16 +21,23 @@ public class InventoryView : MonoBehaviour
     private CameraController cameraController;
     private UIController uiController;
     private InventoryController inventoryController;
+    private ItemsController itemsController;
 
     public bool IsOpen => isOpen;
     
-    public void Init(UIController uiController, ItemContainer inventoryContainer, CameraController cameraController, PlayerSpawner playerSpawner, InventoryController inventoryController)
+    public void Init(UIController uiController, 
+        ItemContainer inventoryContainer, 
+        CameraController cameraController, 
+        PlayerSpawner playerSpawner, 
+        InventoryController inventoryController,
+        ItemsController itemsController)
     {
         this.inventoryContainer = inventoryContainer;
         this.uiController = uiController;
         this.playerSpawner = playerSpawner;
         this.cameraController = cameraController;
         this.inventoryController = inventoryController;
+        this.itemsController = itemsController;
     }
     
     public void Open(ItemContainer externalContainer = null)
@@ -83,19 +88,21 @@ public class InventoryView : MonoBehaviour
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Y))
         {
-            inventoryController.InventoryContainer.AddItem(firstMaterialConfig, 1);
+            var item = itemsController.CreateItem("wood", 1);
+            inventoryController.InventoryContainer.AddItem(item);
         }
         else if (Input.GetKeyDown(KeyCode.U))
         {
-            inventoryController.InventoryContainer.AddItem(firstMaterialConfig, 10);
+            var item = itemsController.CreateItem("wood", 10);
+            inventoryController.InventoryContainer.AddItem(item);
         }
         else if (Input.GetKeyDown(KeyCode.H))
         {
-            inventoryController.InventoryContainer.AddItem(secondMaterialConfig, 1);
+            // inventoryController.InventoryContainer.AddItem(secondMaterialConfig, 1);
         }
         else if (Input.GetKeyDown(KeyCode.J))
         {
-            inventoryController.InventoryContainer.AddItem(secondMaterialConfig, 10);
+            // inventoryController.InventoryContainer.AddItem(secondMaterialConfig, 10);
         }
 #endif
     }

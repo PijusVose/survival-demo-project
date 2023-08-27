@@ -10,10 +10,12 @@ public abstract class ItemConfigBase : ScriptableObject
     [SerializeField] protected bool isStackable = true;
     [SerializeField] protected Sprite itemIcon;
     [SerializeField] protected int maxStack = 100;
+    [SerializeField] protected GameObject itemVisualPrefab;
 
     public string ItemDescription => itemDesc;
     public string ItemKey => itemKey;
     public bool IsStackable => isStackable;
     public Sprite ItemIcon => itemIcon;
     public int MaxStack => maxStack;
+    public GameObject ItemVisualPrefab => itemVisualPrefab;
 }

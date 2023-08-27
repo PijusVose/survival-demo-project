@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -29,8 +28,7 @@ public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
     public void UpdateSlotItem(Item item)
     {
-        // TODO: refactor this, use Update, Add and Remove functions.
-        if (item == null)
+        if (item == null || item.ItemStack == 0)
         {
             ResetCell();
 
@@ -54,16 +52,7 @@ public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         }
         else
         {
-            if (item.ItemStack == 0)
-            {
-                ResetCell();
-
-                storedItem = null;
-            }
-            else
-            {
-                itemStackLabel.text = item.ItemStack.ToString();
-            }
+            itemStackLabel.text = item.ItemStack.ToString();
         }
     }
     

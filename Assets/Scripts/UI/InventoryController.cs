@@ -19,4 +19,6 @@ public class InventoryController : ControllerBase
         
         // TODO: save/load inventory from json.
     }
+
+    public bool IsInventoryContainer(string containerId) => inventoryContainer.ContainerId == containerId;
 }

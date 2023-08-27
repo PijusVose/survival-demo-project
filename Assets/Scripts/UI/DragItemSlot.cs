@@ -1,9 +1,5 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class DragItemSlot : MonoBehaviour
@@ -14,9 +10,8 @@ public class DragItemSlot : MonoBehaviour
     [SerializeField] private GameObject healthBar;
     [SerializeField] private RectTransform greenBarTransform;
 
-    private ItemInfo dragItemInfo;
-
-    public ItemInfo DraggedItemInfo => dragItemInfo;
+    public int startSlotId;
+    public Item draggedItem;
     
     // TODO: Init with UiController and set canvas.
 
@@ -26,12 +21,13 @@ public class DragItemSlot : MonoBehaviour
         uiCanvas = uiController.UICanvas;
     }
     
-    public void EnableDragSlot(ItemInfo itemInfo)
+    public void EnableDragSlot(Item item, int slotId)
     {
-        dragItemInfo = itemInfo;
+        draggedItem = item;
+        startSlotId = slotId;
         
-        slotIcon.sprite = itemInfo.itemConfig.ItemIcon;
-        stackLabel.text = itemInfo.itemStack.ToString();
+        slotIcon.sprite = item.ItemConfig.ItemIcon;
+        stackLabel.text = item.ItemStack.ToString();
             
         FollowMouse();
         
@@ -49,12 +45,12 @@ public class DragItemSlot : MonoBehaviour
         stackLabel.gameObject.SetActive(false);
         healthBar.SetActive(false);
 
-        dragItemInfo = null;
+        draggedItem = null;
     }
 
     private void Update()
     {
-        if (dragItemInfo == null) return;
+        if (draggedItem == null) return;
 
         FollowMouse();
     }

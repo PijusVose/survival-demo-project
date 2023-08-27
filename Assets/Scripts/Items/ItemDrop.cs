@@ -1,39 +1,42 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class ItemDrop : MonoBehaviour
 {
-    [SerializeField] private int itemStack;
-    [SerializeField] private string itemId;
+    [Header("Item Info")]
     [SerializeField] private string clusterId;
-    [SerializeField] private ItemConfigBase itemConfig;
+    [SerializeField] private Item item;
 
-    public int ItemStack => itemStack;
-    public string ItemId => itemId;
-    public ItemConfigBase ItemConfig => itemConfig;
+    public Item Item => item;
+    
+    private bool isInitialized;
     
     // TODO: reference to who dropped item.
 
-    public void Init(string clusterId, ItemInfo itemInfo)
+    public void Setup(string clusterId, Item item, Vector3 dropPosition)
     {
         this.clusterId = clusterId;
-        itemId = Guid.NewGuid().ToString();
-        itemConfig = itemInfo.itemConfig;
-        itemStack = itemInfo.itemStack;
+        this.item = item;
+        transform.position = dropPosition;
+
+        if (!isInitialized)
+            SetupVisuals();
         
-        SetupVisuals();
+        isInitialized = true;
     }
 
     private void SetupVisuals()
     {
-        // TODO: get item info from database, assign model.
-        // TODO: rotate item randomly along Y axis.
-    }
+        var visual = Instantiate(item.ItemConfig.ItemVisualPrefab, transform);
+        var angle = Random.Range(0f, 360f);
+        visual.transform.rotation = Quaternion.AngleAxis(angle, Vector3.up);
 
-    public void PickupDrop()
-    {
-        
+        var visualRenderer = visual.GetComponent<MeshRenderer>();
+        if (visualRenderer != null)
+        {
+            var height = visualRenderer.bounds.size.y;
+            visual.transform.localPosition = new Vector3(0f, height / 2f, 0f);
+        }
     }
 }

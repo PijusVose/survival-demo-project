@@ -9,7 +9,8 @@ public class UIController : ControllerBase
     [SerializeField] private InventoryView inventoryView;
 
     public Canvas UICanvas => uiCanvas;
-    
+
+    private ItemsController itemsController;
     private InventoryController inventoryController;
     private CameraController cameraController;
     private PlayerSpawner playerSpawner;
@@ -21,6 +22,7 @@ public class UIController : ControllerBase
         inventoryController = gameController.GetController<InventoryController>();
         playerSpawner = gameController.GetController<PlayerSpawner>();
         cameraController = gameController.GetController<CameraController>();
+        itemsController = gameController.GetController<ItemsController>();
         
         InitViews();
     }
@@ -33,7 +35,8 @@ public class UIController : ControllerBase
                 inventoryController.InventoryContainer,
                 cameraController,
                 playerSpawner,
-                inventoryController);
+                inventoryController,
+                itemsController);
         }
     }
 

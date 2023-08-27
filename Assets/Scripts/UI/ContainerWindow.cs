@@ -16,8 +16,10 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     [SerializeField] private RectTransform backgroundRectTransform;
 
     private ItemContainer container;
-    private ItemsPooler itemsPooler;
-    
+    private InventoryController inventoryController;
+    private PlayerSpawner playerSpawner;
+    private ItemsController itemsController;
+
     private List<ItemSlot> itemSlots = new List<ItemSlot>();
     private ItemSlot mouseOverSlot;
     private bool isDragging;
@@ -33,7 +35,10 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void Init(ItemContainer container)
     {
         this.container = container;
-        itemsPooler = GameController.Instance.GetController<ItemsPooler>();
+
+        inventoryController = GameController.Instance.GetController<InventoryController>();
+        itemsController = GameController.Instance.GetController<ItemsController>();
+        playerSpawner = GameController.Instance.GetController<PlayerSpawner>();
         
         dragItemSlot.Init();
         
@@ -109,9 +114,9 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
         slotsGridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         slotsGridLayoutGroup.constraintCount = SLOT_COLUMN_COUNT;
 
-        if (itemSlots.Count < container.AmountOfSlots)
+        if (itemSlots.Count < container.SlotsAmount)
         {
-            var slotsToAdd = container.AmountOfSlots - itemSlots.Count;
+            var slotsToAdd = container.SlotsAmount - itemSlots.Count;
             for (int i = 0; i < slotsToAdd; i++)
             {
                 var slot = Instantiate(itemSlotPrefab, slotsGrid);
@@ -120,14 +125,14 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
             }
         }
 
-        for (int i = 0; i < container.AmountOfSlots; i++)
+        for (int i = 0; i < container.SlotsAmount; i++)
         {
             var slot = itemSlots[i];
             
             slot.Init(this, i);
         }
         
-        var rows = Mathf.CeilToInt(container.AmountOfSlots / (float)SLOT_COLUMN_COUNT);
+        var rows = Mathf.CeilToInt(container.SlotsAmount / (float)SLOT_COLUMN_COUNT);
         var bgHeight = rows * SLOT_SIZE + (rows - 1) * SLOT_SPACING + GRID_SPACING * 2 + TOP_BAR_HEIGHT;
         var bgWidth = SLOT_COLUMN_COUNT * SLOT_SIZE + (SLOT_COLUMN_COUNT - 1) * SLOT_SPACING + GRID_SPACING * 2;
 
@@ -143,9 +148,9 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         if (!isOpen) return;
         
-        if (item.SlotId >= 0 && item.SlotId < itemSlots.Count)
+        if (item.ContainerInfo.SlotId >= 0 && item.ContainerInfo.SlotId < itemSlots.Count)
         {
-            var slot = itemSlots.FirstOrDefault(x => x.SlotId == item.SlotId);
+            var slot = itemSlots.FirstOrDefault(x => x.SlotId == item.ContainerInfo.SlotId);
             if (slot != null)
             {
                 slot.UpdateSlotItem(item);
@@ -157,18 +162,22 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         if (mouseOverSlot != null)
         {
-            var itemInSlot = container.GetItemInSlot(mouseOverSlot.SlotId);
-            if (itemInSlot != null)
+            var itemToDrag = container.GetItemInSlot(mouseOverSlot.SlotId);
+            if (itemToDrag != null)
             {
-                var dragStack = isHalf ? itemInSlot.ItemStack / 2 : itemInSlot.ItemStack;
-                dragStack = Mathf.Max(1, dragStack);
-                
-                var dragItemInfo = new ItemInfo(itemInSlot.ItemConfig, dragStack, itemInSlot.SlotId);
+                if (isHalf)
+                {
+                    var newDraggedItem = container.SplitItem(itemToDrag);
+                    dragItemSlot.EnableDragSlot(newDraggedItem, mouseOverSlot.SlotId);
+                }
+                else
+                {
+                    dragItemSlot.EnableDragSlot(itemToDrag, mouseOverSlot.SlotId);
+                    
+                    var slot = GetSlotOfId(mouseOverSlot.SlotId);
+                    slot.UpdateSlotItem(null);
+                }
 
-                dragItemSlot.EnableDragSlot(dragItemInfo);
-                
-                container.RemoveItem(itemInSlot, dragStack);
-                
                 isDragging = true;
             }
         }
@@ -178,15 +187,17 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         isDragging = false;
 
-        if (mouseOverSlot != null && dragItemSlot.DraggedItemInfo != null)
+        if (mouseOverSlot != null && dragItemSlot.draggedItem != null)
         {
-            container.AddItemToSlot(dragItemSlot.DraggedItemInfo, mouseOverSlot.SlotId);
+            var leftover = container.AddItemToSlot(dragItemSlot.draggedItem, mouseOverSlot.SlotId);
+            if (leftover != 0)
+                container.AddItemToSlot(dragItemSlot.draggedItem, dragItemSlot.startSlotId);
         }
         else
         {
             if (!isMouseOverWindow)
             {
-                itemsPooler.DropItem(dragItemSlot.DraggedItemInfo, container.transform.position);
+                itemsController.DropItem(dragItemSlot.draggedItem, GetContainerPosition());
             }
             else
             {
@@ -201,12 +212,25 @@ public class ContainerWindow : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         isDragging = false;
         
-        if (dragItemSlot.DraggedItemInfo != null)
-            container.AddItemToSlot(dragItemSlot.DraggedItemInfo, dragItemSlot.DraggedItemInfo.originalSlotId);
+        if (dragItemSlot.draggedItem != null)
+            container.AddItemToSlot(dragItemSlot.draggedItem, dragItemSlot.startSlotId);
         
         dragItemSlot.DisableDragSlot();
     }
 
+    private ItemSlot GetSlotOfId(int slotId)
+    {
+        return itemSlots.FirstOrDefault(x => x.SlotId == slotId);
+    }
+    
+    private Vector3 GetContainerPosition()
+    {
+        if (inventoryController.IsInventoryContainer(container.ContainerId))
+            return playerSpawner.Player.transform.position;
+        
+        return container.transform.position;
+    }
+    
     public void SetMouseOverSlot(ItemSlot slot)
     {
         if (isMouseOverWindow && slot == null)
