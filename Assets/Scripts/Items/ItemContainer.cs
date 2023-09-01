@@ -17,6 +17,7 @@ public class ItemContainer : MonoBehaviour
 
     public int SlotsAmount => slotsAmount;
     public string ContainerId => containerId;
+    public List<Item> Items => containerItems;
     
     public void Init(int amountOfSlots)
     {
@@ -29,7 +30,11 @@ public class ItemContainer : MonoBehaviour
         var itemInSlot = GetItemInSlot(slotId);
         if (itemInSlot != null)
         {
-            if (itemInSlot.ItemConfig.ItemKey == itemToAdd.ItemConfig.ItemKey)
+            if (itemInSlot.ItemId == itemToAdd.ItemId)
+            {
+                OnItemChanged?.Invoke(itemToAdd);
+            }
+            else if (itemInSlot.ItemConfig.ItemKey == itemToAdd.ItemConfig.ItemKey)
             {
                 if (itemInSlot.IsFullStack())
                 {
@@ -70,11 +75,8 @@ public class ItemContainer : MonoBehaviour
         return itemToAdd.ItemStack;
     }
 
-    public bool IsContainerFull()
-    {
-        return containerItems.Count >= slotsAmount && containerItems.All(x => x.IsFullStack());
-    }
-    
+    public bool IsContainerFull() => containerItems.Count >= slotsAmount && containerItems.All(x => x.IsFullStack());
+
     public void RemoveItem(Item item, int amount)
     {
         item.DecreaseStack(amount);
@@ -91,23 +93,84 @@ public class ItemContainer : MonoBehaviour
         }
     }
 
-    public Item SplitItem(Item item)
+    // Move X amount of item to this slot
+    // Check if slot has item
+    // - Is item in slot the same item?
+    // - Is item in slot of same type?
+    // - Is item in slot of different type?
+    // --- 
+    
+    public void MoveItemToSlot(Item itemToMove, int slotId, int stack)
     {
-        var splitStack = item.ItemStack / 2;
-        var splitItem = new Item(item.ItemConfig, splitStack);
-        splitItem.MoveToContainer(containerId, -1);
+        var itemInSlot = GetItemInSlot(slotId);
+        if (itemInSlot != null)
+        {
+            if (itemInSlot.ItemId == itemToMove.ItemId)
+            {
+                OnItemChanged?.Invoke(itemToMove);
+            }
+            else if (itemInSlot.ItemConfig.ItemKey == itemToMove.ItemConfig.ItemKey)
+            {
+                if (itemInSlot.IsFullStack())
+                {
+                    OnItemChanged?.Invoke(itemToMove);
+                }
+                else
+                {
+                    var leftover = itemInSlot.IncreaseStack(stack);
+                    var stackToRemove = stack - leftover;
+                    
+                    RemoveItem(itemToMove, stackToRemove);
+                    
+                    OnItemChanged?.Invoke(itemToMove);
+                    OnItemChanged?.Invoke(itemInSlot);
+                }
+            }
+            else if (itemToMove.ItemStack == stack)
+            {
+                var firstSlotId = itemToMove.ContainerInfo.SlotId;
+                var secondSlotId = itemInSlot.ContainerInfo.SlotId;
+                
+                itemInSlot.MoveToContainer(containerId, firstSlotId);
+                itemToMove.MoveToContainer(containerId, secondSlotId);
 
-        RemoveItem(item, splitStack);
-        
-        containerItems.Add(splitItem);
+                OnItemChanged?.Invoke(itemInSlot);
+                OnItemChanged?.Invoke(itemToMove);
+            }
+            else
+            {
+                OnItemChanged?.Invoke(itemToMove);
+            }
+        }
+        else
+        {
+            if (itemToMove.ItemStack != stack)
+            {
+                var itemCopy = new Item(itemToMove.ItemConfig, stack);
+                itemCopy.MoveToContainer(containerId, slotId);
+                
+                containerItems.Add(itemCopy);
 
-        return splitItem;
+                itemToMove.DecreaseStack(stack);
+                
+                OnItemChanged?.Invoke(itemToMove);
+                OnItemChanged?.Invoke(itemCopy);
+            }
+            else
+            {
+                itemToMove.MoveToContainer(containerId, slotId);
+                
+                OnItemChanged?.Invoke(itemToMove);
+            }
+        }
     }
 
     public void AddItem(Item item)
     {
         for (int i = 0; i < slotsAmount; i++)
         {
+            if (IsContainerFull()) break;
+            
             var existingItemWithSpace = FindItemOfTypeWithSpace(item.ItemConfig);
             if (existingItemWithSpace != null)
             {
@@ -122,24 +185,28 @@ public class ItemContainer : MonoBehaviour
             }
             else
             {
-                if (IsContainerFull()) break;
-
                 var slotId = GetAvailableSlotId();
+                if (slotId == -1) break;
+                
                 item.MoveToContainer(containerId, slotId);
 
                 containerItems.Add(item);
                 
                 OnItemAdded?.Invoke(item);
+
+                break;
             }
         }
         
-        // TODO: what happens if item doesn't fit anymore in inventory? Just return it?
+        // TODO: what happens if item doesn't fit anymore in inventory? Just drop it on the ground?
     }
 
     private Item FindItemOfTypeWithSpace(ItemConfigBase itemConfig)
     {
         return containerItems.FirstOrDefault(x => x.ItemConfig == itemConfig && !x.IsFullStack());
     }
+
+    private Item CopyItem(Item itemToCopy, int stack) => new Item(itemToCopy.ItemConfig, stack);
 
     private int GetAvailableSlotId()
     {

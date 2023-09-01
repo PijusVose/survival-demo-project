@@ -27,4 +27,25 @@ public class ItemCluster
             
         itemDrops.Add(itemDrop);
     }
+
+    public Vector3 GetClusterCenter()
+    {
+        var totalX = 0f;
+        var totalY = 0f;
+        var totalZ = 0f;
+        
+        foreach(var itemDrop in itemDrops)
+        {
+            var pos = itemDrop.transform.position;
+            totalX += pos.x;
+            totalY += pos.y;
+            totalZ += pos.z;
+        }
+        
+        var centerX = totalX / itemDrops.Count;
+        var centerY = totalY / itemDrops.Count;
+        var centerZ = totalZ/ itemDrops.Count;
+
+        return new Vector3(centerX, centerY, centerZ);
+    }
 }

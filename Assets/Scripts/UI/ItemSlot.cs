@@ -1,9 +1,10 @@
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class ItemSlot : MonoBehaviour, IPointerEnterHandler
 {
     [SerializeField] private Image itemIcon;
     [SerializeField] private TextMeshProUGUI itemStackLabel;
@@ -16,8 +17,7 @@ public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     private int slotId;
 
     public int SlotId => slotId;
-    public Item StoredItem => storedItem;
-    
+
     public void Init(ContainerWindow containerWindow, int slotId)
     {
         ResetCell();
@@ -26,33 +26,44 @@ public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         this.slotId = slotId;
     }
 
-    public void UpdateSlotItem(Item item)
+    public void SetSlotItem(Item item)
     {
         if (item == null || item.ItemStack == 0)
         {
-            ResetCell();
-
             storedItem = null;
-
-            return;
         }
-        
-        if (storedItem == null || storedItem.ItemId != item.ItemId)
+        else if (storedItem == null || storedItem.ItemId != item.ItemId)
+        {
+            storedItem = item;
+        }
+
+        UpdateSlot();
+    }
+
+    private void UpdateSlot()
+    {
+        if (storedItem != null)
         {
             // TODO: specific handling for non-material items like armor, weapons etc.
             // TODO: Update health bars and so on.
             
-            itemIcon.sprite = item.ItemConfig.ItemIcon;
+            itemIcon.sprite = storedItem.ItemConfig.ItemIcon;
             itemIcon.gameObject.SetActive(true);
-        
+            
+            itemStackLabel.text = storedItem.ItemStack.ToString();
             itemStackLabel.gameObject.SetActive(true);
-            itemStackLabel.text = item.ItemStack.ToString();
-
-            storedItem = item;
         }
         else
         {
-            itemStackLabel.text = item.ItemStack.ToString();
+            ResetCell();
+        }
+    }
+
+    public void SetSlotStack(int stack)
+    {
+        if (storedItem != null)
+        {
+            itemStackLabel.text = stack.ToString();
         }
     }
     
@@ -68,10 +79,5 @@ public class ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     public void OnPointerEnter(PointerEventData eventData)
     {
         containerWindow.SetMouseOverSlot(this);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        containerWindow.SetMouseOverSlot(null);
     }
 }

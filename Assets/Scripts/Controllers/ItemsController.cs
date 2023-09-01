@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class ItemsController : ControllerBase
 {
@@ -9,6 +11,9 @@ public class ItemsController : ControllerBase
    [SerializeField] private LayerMask groundLayerMask;
 
    private List<ItemCluster> itemClusters;
+
+   private const float SCATTER_WEIGHT = 0.5f;
+   private const float MAX_CLUSTER_RADIUS = 5f;
    
    public override void Init(GameController gameController)
    {
@@ -33,8 +38,7 @@ public class ItemsController : ControllerBase
        return null;
    }
    
-   // TODO: add scatter bool.
-   public void DropItem(Item item, Vector3 dropOrigin)
+   public void DropItem(Item item, Vector3 dropOrigin, bool scatter = true)
    {
        var closestCluster = GetClosestCluster(dropOrigin);
        if (closestCluster == null)
@@ -42,6 +46,13 @@ public class ItemsController : ControllerBase
            closestCluster = new ItemCluster();
            
            itemClusters.Add(closestCluster);
+       }
+
+       if (scatter)
+       {
+           var xOffset = Random.Range(-SCATTER_WEIGHT,SCATTER_WEIGHT);
+           var zOffset = Random.Range(-SCATTER_WEIGHT, SCATTER_WEIGHT);
+           dropOrigin += new Vector3(xOffset, 0f, zOffset);
        }
 
        var dropPosition = GetDropPosition(dropOrigin);
@@ -53,6 +64,7 @@ public class ItemsController : ControllerBase
 
    private Vector3 GetDropPosition(Vector3 startPosition)
    {
+       startPosition += new Vector3(0f, 0.5f, 0f);
        if (Physics.Raycast(startPosition, Vector3.down, out RaycastHit hit, Mathf.Infinity, groundLayerMask))
        {
            return hit.point;
@@ -60,7 +72,7 @@ public class ItemsController : ControllerBase
 
        return startPosition;
    }
-   
+
    private ItemCluster GetClosestCluster(Vector3 dropOrigin)
    {
        ItemCluster closestCluster = null;
@@ -69,6 +81,8 @@ public class ItemsController : ControllerBase
        foreach (var cluster in itemClusters)      
        {
            var distance = Vector3.Distance(dropOrigin, cluster.ClusterOrigin);
+           if (distance > MAX_CLUSTER_RADIUS) continue;
+
            if (closestCluster == null || closestClusterDist > distance)
            {
                closestCluster = cluster;
@@ -77,5 +91,19 @@ public class ItemsController : ControllerBase
        }
 
        return closestCluster;
+   }
+
+   private void OnDrawGizmos()
+   {
+       if (itemClusters == null) return;
+       
+       foreach (var cluster in itemClusters)
+       {
+           var center = cluster.GetClusterCenter();
+           foreach (var itemDrop in cluster.ItemDrops)
+           {
+               Gizmos.DrawLine(center, itemDrop.transform.position);
+           }
+       }
    }
 }

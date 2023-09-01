@@ -1,3 +1,4 @@
+using UI;
 using UnityEngine;
 
 public class InventoryView : MonoBehaviour
@@ -9,10 +10,6 @@ public class InventoryView : MonoBehaviour
     [SerializeField] private ContainerWindow inventoryWindow;
     [SerializeField] private ContainerWindow externalContainerWindow;
 
-    [Header("DEBUG")]
-    [SerializeField] private MaterialConfig firstMaterialConfig;
-    [SerializeField] private MaterialConfig secondMaterialConfig;
-    
     private bool isOpen;
 
     private ItemContainer externalContainer;
@@ -44,17 +41,12 @@ public class InventoryView : MonoBehaviour
     {
         isOpen = true;
         
-        this.externalContainer = externalContainer;
-        
-        inventoryWindow.Init(inventoryContainer);
-        inventoryWindow.Open();
+        inventoryWindow.Open(inventoryContainer);
 
+        this.externalContainer = externalContainer;
         if (externalContainer != null)
-        {
-            externalContainerWindow.Init(externalContainer);
-            externalContainerWindow.Open();
-        }
-        
+            externalContainerWindow.Open(externalContainer);
+
         playerSpawner.Player.SetInputState(false);
         cameraController.SetCameraMovementState(false, true);
         
@@ -98,11 +90,13 @@ public class InventoryView : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.H))
         {
-            // inventoryController.InventoryContainer.AddItem(secondMaterialConfig, 1);
+            var item = itemsController.CreateItem("metal", 1);
+            inventoryController.InventoryContainer.AddItem(item);
         }
         else if (Input.GetKeyDown(KeyCode.J))
         {
-            // inventoryController.InventoryContainer.AddItem(secondMaterialConfig, 10);
+            var item = itemsController.CreateItem("metal", 10);
+            inventoryController.InventoryContainer.AddItem(item);
         }
 #endif
     }
