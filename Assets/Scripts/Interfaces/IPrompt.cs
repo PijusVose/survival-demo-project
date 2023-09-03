@@ -4,6 +4,8 @@ using UnityEngine;
 
 public interface IPrompt
 {
-    void ShowPrompt(Transform target, Vector3 offset);
+    void Init(Camera mainCamera);
+    bool IsShown { get; }
+    void ShowPrompt(IInteractable interactable, Transform target, Vector3 offset);
     void HidePrompt();
 }

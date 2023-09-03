@@ -25,6 +25,8 @@ public class ItemsPooler : MonoBehaviour
         if (pooledDrop == null)
             pooledDrop = CreateItemDrop();
 
+        pooledDrop.gameObject.SetActive(true);
+        
         return pooledDrop;
     }
 

@@ -595,6 +595,10 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 3228912384128642466, guid: a9dadf933c48f3f4986170601423a1e8, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
+      objectReference: {fileID: 0}
     - target: {fileID: 3228912384128642467, guid: a9dadf933c48f3f4986170601423a1e8, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -605,7 +609,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3228912384128642467, guid: a9dadf933c48f3f4986170601423a1e8, type: 3}
       propertyPath: m_RootOrder
-      value: 6
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3228912384128642467, guid: a9dadf933c48f3f4986170601423a1e8, type: 3}
       propertyPath: m_AnchorMax.x
@@ -689,7 +693,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: 513b181b8da8a8f4cbb5bc3d69bbb07a, type: 2}
     - target: {fileID: 4069599362184710040, guid: a9dadf933c48f3f4986170601423a1e8, type: 3}
       propertyPath: m_hasFontAssetChanged
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a9dadf933c48f3f4986170601423a1e8, type: 3}
@@ -807,7 +811,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6975993936434478276, guid: b8a6a20164e958647981fb6ebebe2528, type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6975993936434478276, guid: b8a6a20164e958647981fb6ebebe2528, type: 3}
       propertyPath: m_AnchorMax.x

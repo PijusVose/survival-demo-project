@@ -285,8 +285,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6d3942d32dd09c48b10f9733026d22e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  interactionTextLabel: {fileID: 519796197486590823}
   promptTarget: {fileID: 0}
-  mainCamera: {fileID: 0}
+  promptCamera: {fileID: 0}
   showDuration: 0.15
 --- !u!1 &2569072017923628136
 GameObject:

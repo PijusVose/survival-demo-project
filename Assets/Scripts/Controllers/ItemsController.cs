@@ -12,8 +12,14 @@ public class ItemsController : ControllerBase
 
    private List<ItemCluster> itemClusters;
 
+   private PlayerSpawner playerSpawner;
+   private InteractionController interactionController;
+   private InventoryController inventoryController;
+
    private const float SCATTER_WEIGHT = 0.5f;
    private const float MAX_CLUSTER_RADIUS = 5f;
+
+   public event Action<ItemDrop> OnItemPickedUp;
    
    public override void Init(GameController gameController)
    {
@@ -21,7 +27,12 @@ public class ItemsController : ControllerBase
        
        itemClusters = new List<ItemCluster>();
    }
-   
+
+   protected override void AwakeController()
+   {
+       inventoryController = gameController.GetController<InventoryController>();
+   }
+
    // GetItemConfigById(string itemId)
    // DropItemFromContainer(ItemInfo itemInfo)
    // CreateItemDrop
@@ -38,7 +49,7 @@ public class ItemsController : ControllerBase
        return null;
    }
    
-   public void DropItem(Item item, Vector3 dropOrigin, bool scatter = true)
+   public void DropItem(ItemContainer container, Item item, int amount, Vector3 dropOrigin, bool scatter = true)
    {
        var closestCluster = GetClosestCluster(dropOrigin);
        if (closestCluster == null)
@@ -59,6 +70,8 @@ public class ItemsController : ControllerBase
        var itemDrop = itemsPooler.GetItemDrop(item);
        itemDrop.Setup(closestCluster.ClusterId, item, dropPosition);
 
+       container.RemoveItemFromContainer(item, amount, itemDrop);
+       
        closestCluster.AddItem(itemDrop);
    }
 
@@ -93,6 +106,30 @@ public class ItemsController : ControllerBase
        return closestCluster;
    }
 
+   public void PickupItem(ItemDrop itemDrop)
+   {
+       var leftover = inventoryController.InventoryContainer.AddItem(itemDrop.Item);
+       if (leftover == 0)
+       {
+           var cluster = GetClusterOfItem(itemDrop);
+           if (cluster != null)
+           {
+               cluster.RemoveItem(itemDrop);
+               
+               itemsPooler.ReturnItemDropToPool(itemDrop);
+           }
+           else
+           {
+               Debug.LogWarning($"Item of ID {itemDrop.Item.ItemId} does not belong to any cluster!");
+           }
+       }
+
+       OnItemPickedUp?.Invoke(itemDrop);
+   }
+
+   private ItemCluster GetClusterOfItem(ItemDrop itemDrop) => itemClusters.FirstOrDefault(x => x.ItemDrops.Exists(y => y == itemDrop));
+
+#if UNITY_EDITOR
    private void OnDrawGizmos()
    {
        if (itemClusters == null) return;
@@ -106,4 +143,6 @@ public class ItemsController : ControllerBase
            }
        }
    }
+#endif
+    
 }

@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 
 [RequireComponent(typeof(SphereCollider))]
@@ -12,26 +10,46 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
     [SerializeField] private float minDotProduct;
     [SerializeField] private float interactionRadius;
 
+    private ItemsController itemsController;
     private IPlayerController playerController;
     private CameraController cameraController;
     private PromptsManager promptsManager;
     
-    private List<IInteractable> interactables;
+    private List<IInteractable> interactables = new();
     private IInteractable currentInteractObject;
+    
+    // Interaction target vector is always camera.forward.
+    // SphereCollider also checks for closests items, then compares dot products of all of them
+    // Closest target to interaction target vector shows interaction prompt
+    // Play hide/show animation of interaction UI prompt
 
     private bool isInitialized;
     
     public void Init(IPlayerController playerController)
     {
         this.playerController = playerController;
-        interactables = new List<IInteractable>();
 
         SetupCollider();
         
-        promptsManager = PromptsManager.Instance;
+        promptsManager = playerController.GameController.GetController<PromptsManager>();
         cameraController = playerController.GameController.GetController<CameraController>();
+        itemsController = this.playerController.GameController.GetController<ItemsController>();
 
+        SubscribeToEvents();
+        
         isInitialized = true;
+    }
+
+    private void SubscribeToEvents()
+    {
+        itemsController.OnItemPickedUp += RemoveInteractable;
+    }
+
+    private void OnDestroy()
+    {
+        if (itemsController == null) return;
+
+        itemsController.OnItemPickedUp -= RemoveInteractable;
     }
 
     private void Update()
@@ -60,7 +78,13 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
 
     private void CheckForClosestInteractable()
     {
-        if (interactables == null || interactables.Count == 0) return;
+        if (interactables == null || interactables.Count == 0)
+        {
+            if (promptsManager.IsPromptShown<InteractablePrompt>())
+                promptsManager.HideInteractPrompt();
+            
+            return;
+        }
 
         IInteractable targetInteractable = null;
         foreach (var interactable in interactables)
@@ -92,6 +116,8 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
     {
         if (interactable is MonoBehaviour interactableAsMono)
         {
+            if (!interactableAsMono.gameObject.activeInHierarchy) return;
+            
             var currDotProduct = GetDotProductBetweenCamera(interactableAsMono.transform.position);
             if (currDotProduct <= minDotProduct) return;
                 
@@ -109,6 +135,14 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
         }
     }
 
+    private void RemoveInteractable(IInteractable interactable)
+    {
+        if (currentInteractObject == interactable)
+            currentInteractObject = null;
+        
+        interactables.Remove(interactable);
+    }
+
     private float GetDotProductBetweenCamera(Vector3 startPosition)
     {
         var dirFromPlayer = (startPosition - transform.position).normalized;
@@ -119,7 +153,7 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
     private void OnTriggerEnter(Collider other)
     {
         var interactable = other.GetComponent<IInteractable>();
-        if (interactable != null && !interactables.Contains(interactable))
+        if (interactable != null && !interactables.Contains(interactable) && other.gameObject.activeInHierarchy)
         {
             interactables.Add(interactable);
         }

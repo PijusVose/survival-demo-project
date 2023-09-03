@@ -28,6 +28,11 @@ public class ItemCluster
         itemDrops.Add(itemDrop);
     }
 
+    public void RemoveItem(ItemDrop itemDrop)
+    {
+        itemDrops.Remove(itemDrop);
+    }
+
     public Vector3 GetClusterCenter()
     {
         var totalX = 0f;

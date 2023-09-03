@@ -45,10 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb0609196f4fb5c42a50907337581fea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemStack: 0
-  itemId: 
   clusterId: 
-  itemConfig: {fileID: 0}
+  promptOffset: {x: 0, y: 1, z: 0}
+  interactKey: 101
+  interactActionName: Pick up
 --- !u!135 &9218410037968448963
 SphereCollider:
   m_ObjectHideFlags: 0

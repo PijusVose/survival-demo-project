@@ -62,7 +62,7 @@ namespace UI
         {
             container.OnItemAdded += Container_OnItemChanged;
             container.OnItemChanged += Container_OnItemChanged;
-            container.OnItemRemoved += Container_OnItemChanged;
+            container.OnItemRemoved += Container_OnItemRemoved;
         }
 
         private void UnsubscribeFromEvents()
@@ -71,7 +71,7 @@ namespace UI
         
             container.OnItemAdded -= Container_OnItemChanged;
             container.OnItemChanged -= Container_OnItemChanged;
-            container.OnItemRemoved -= Container_OnItemChanged;
+            container.OnItemRemoved -= Container_OnItemRemoved;
         }
 
         private void OnDestroy()
@@ -189,6 +189,17 @@ namespace UI
                 }
             }
         }
+
+        private void Container_OnItemRemoved(Item item)
+        {
+            if (!isOpen) return;
+
+            var slot = itemSlots.FirstOrDefault(x => x.StoredItem == item);
+            if (slot != null)
+            {
+                slot.SetSlotItem(null);
+            }
+        }
     
         private void StartDragging(DragType startDragType)
         {
@@ -234,7 +245,7 @@ namespace UI
             }
             else
             {
-                DropItemFromContainer(dragItemSlot.DraggedItem);
+                itemsController.DropItem(container, dragItemSlot.DraggedItem, dragItemSlot.ItemStack, GetContainerPosition());
             }
 
             dragItemSlot.DisableDragSlot();
@@ -248,13 +259,6 @@ namespace UI
             dragType = DragType.None;
         
             dragItemSlot.DisableDragSlot();
-        }
-
-        private void DropItemFromContainer(Item item)
-        {
-            container.RemoveItem(item, item.ItemStack);
-        
-            itemsController.DropItem(item, GetContainerPosition());
         }
 
         private ItemSlot GetSlotOfId(int slotId)

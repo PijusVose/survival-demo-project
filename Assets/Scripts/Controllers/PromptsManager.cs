@@ -4,19 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class PromptsManager : Singleton<PromptsManager>
+public class PromptsManager : ControllerBase
 {
-    // TODO: change from singleton to dependency injection.
     [SerializeField] private InteractablePrompt interactionPromptPrefab;
     
-    private List<IPrompt> prompts;
-
-    protected override void SingletonStarted()
-    {
-        prompts = GetComponentsInChildren<IPrompt>(includeInactive: true).ToList();
-        
-        Debug.Log($"prompts: {prompts.Count}");
-    }
+    private List<IPrompt> prompts = new();
+    
+    // TODO: Show/hide when inventory is enabled.
 
     public void ShowInteractPrompt(IInteractable interactable)
     {
@@ -25,7 +19,7 @@ public class PromptsManager : Singleton<PromptsManager>
         {
             if (interactable is MonoBehaviour interactableAsMono)
             {
-                interactionPrompt.ShowPrompt(interactableAsMono.transform, interactable.PromptOffset);
+                interactionPrompt.ShowPrompt(interactable, interactableAsMono.transform, interactable.PromptOffset);
             }
         }
         else
@@ -47,11 +41,22 @@ public class PromptsManager : Singleton<PromptsManager>
         }
     }
 
+    public bool IsPromptShown<T>() where T : IPrompt
+    {
+        return prompts.Any(x => x.GetType() == typeof(T) && x.IsShown);
+    }
+
     private InteractablePrompt GetInteractionPrompt()
     {
-        if (prompts == null || prompts.Count == 0) return null;
-        
-        // TODO: get prompt which is disabled. If no prompts available, create new instance.
-        return prompts.FirstOrDefault(x => x.GetType() == typeof(InteractablePrompt)) as InteractablePrompt;
+        var prompt = prompts.FirstOrDefault(x => x.GetType() == typeof(InteractablePrompt)) as InteractablePrompt;
+        if (prompt == null)
+        {
+            prompt = Instantiate(interactionPromptPrefab, transform);
+            prompt.Init(Camera.main);
+            
+            prompts.Add(prompt);
+        }
+
+        return prompt;
     }
 }

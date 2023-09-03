@@ -55,6 +55,7 @@ public class Item
         if (dropInfo == null)
             dropInfo = new ItemDropInfo();
 
+        // TODO: I don't think I really need this info.
         dropInfo.DropId = dropId;
         dropInfo.DropPosition = dropPosition;
         

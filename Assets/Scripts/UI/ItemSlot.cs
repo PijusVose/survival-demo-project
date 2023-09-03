@@ -17,6 +17,7 @@ public class ItemSlot : MonoBehaviour, IPointerEnterHandler
     private int slotId;
 
     public int SlotId => slotId;
+    public Item StoredItem => storedItem;
 
     public void Init(ContainerWindow containerWindow, int slotId)
     {
