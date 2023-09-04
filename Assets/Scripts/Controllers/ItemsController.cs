@@ -10,7 +10,7 @@ public class ItemsController : ControllerBase
    [SerializeField] private ItemsPooler itemsPooler;
    [SerializeField] private LayerMask groundLayerMask;
 
-   private List<ItemCluster> itemClusters;
+   private List<ItemCluster> itemClusters = new();
 
    private PlayerSpawner playerSpawner;
    private InteractionController interactionController;
@@ -20,13 +20,6 @@ public class ItemsController : ControllerBase
    private const float MAX_CLUSTER_RADIUS = 5f;
 
    public event Action<ItemDrop> OnItemPickedUp;
-   
-   public override void Init(GameController gameController)
-   {
-       base.Init(gameController);
-       
-       itemClusters = new List<ItemCluster>();
-   }
 
    protected override void AwakeController()
    {
@@ -34,8 +27,6 @@ public class ItemsController : ControllerBase
    }
 
    // GetItemConfigById(string itemId)
-   // DropItemFromContainer(ItemInfo itemInfo)
-   // CreateItemDrop
    // Control clusters of items.
 
    public Item CreateItem(string itemKey, int stack)
