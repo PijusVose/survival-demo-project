@@ -41,6 +41,17 @@ public class PromptsManager : ControllerBase
         }
     }
 
+    public void SetPromptsEnabled(bool state)
+    {
+        foreach (var prompt in prompts)       
+        {
+            if (prompt is MonoBehaviour promptMono)
+            {
+                promptMono.gameObject.SetActive(state);
+            }
+        }
+    }
+
     public bool IsPromptShown<T>() where T : IPrompt
     {
         return prompts.Any(x => x.GetType() == typeof(T) && x.IsShown);

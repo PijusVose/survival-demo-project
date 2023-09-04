@@ -11,6 +11,7 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
     [SerializeField] private float interactionRadius;
 
     private ItemsController itemsController;
+    private UIController uiController;
     private IPlayerController playerController;
     private CameraController cameraController;
     private PromptsManager promptsManager;
@@ -33,7 +34,8 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
         
         promptsManager = playerController.GameController.GetController<PromptsManager>();
         cameraController = playerController.GameController.GetController<CameraController>();
-        itemsController = this.playerController.GameController.GetController<ItemsController>();
+        itemsController = playerController.GameController.GetController<ItemsController>();
+        uiController = playerController.GameController.GetController<UIController>();
 
         SubscribeToEvents();
         
@@ -69,7 +71,8 @@ public class InteractionController : MonoBehaviour, IPlayerPlugin
     private void CheckForInteractKeyCode()
     {
         if (currentInteractObject == null) return;
-
+        if (uiController.IsAnyViewShown()) return;
+        
         if (Input.GetKeyDown(currentInteractObject.InteractKey))
         {
             currentInteractObject.OnInteract();

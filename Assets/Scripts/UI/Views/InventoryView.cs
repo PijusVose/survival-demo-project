@@ -14,6 +14,8 @@ public class InventoryView : MonoBehaviour
 
     private ItemContainer externalContainer;
     private ItemContainer inventoryContainer;
+    private GameController gameController;
+    private PromptsManager promptsController;
     private PlayerSpawner playerSpawner;
     private CameraController cameraController;
     private UIController uiController;
@@ -22,24 +24,25 @@ public class InventoryView : MonoBehaviour
 
     public bool IsOpen => isOpen;
     
-    public void Init(UIController uiController, 
-        ItemContainer inventoryContainer, 
-        CameraController cameraController, 
-        PlayerSpawner playerSpawner, 
-        InventoryController inventoryController,
-        ItemsController itemsController)
+    public void Init(UIController uiController, GameController gameController)
     {
-        this.inventoryContainer = inventoryContainer;
         this.uiController = uiController;
-        this.playerSpawner = playerSpawner;
-        this.cameraController = cameraController;
-        this.inventoryController = inventoryController;
-        this.itemsController = itemsController;
+        this.gameController = gameController;
+
+        playerSpawner = gameController.GetController<PlayerSpawner>();
+        cameraController = gameController.GetController<CameraController>();
+        inventoryController = gameController.GetController<InventoryController>();
+        itemsController = gameController.GetController<ItemsController>();
+        promptsController = gameController.GetController<PromptsManager>();
+
+        inventoryContainer = inventoryController.InventoryContainer;
     }
     
     public void Open(ItemContainer externalContainer = null)
     {
         isOpen = true;
+        
+        promptsController.SetPromptsEnabled(false);
         
         inventoryWindow.Open(inventoryContainer);
 
@@ -70,6 +73,7 @@ public class InventoryView : MonoBehaviour
         
         uiController.SetBlurState(false);
         
+        promptsController.SetPromptsEnabled(true);
         gameObject.SetActive(false);
     }
     

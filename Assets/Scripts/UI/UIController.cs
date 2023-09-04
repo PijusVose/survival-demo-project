@@ -5,24 +5,15 @@ public class UIController : ControllerBase
     [SerializeField] private GameObject blurBackground;
     [SerializeField] private Canvas uiCanvas;
     
+    // TODO: all views derive from UIViewBase, load them on initialization.
     [Header("Views")] 
     [SerializeField] private InventoryView inventoryView;
 
     public Canvas UICanvas => uiCanvas;
 
-    private ItemsController itemsController;
-    private InventoryController inventoryController;
-    private CameraController cameraController;
-    private PlayerSpawner playerSpawner;
-    
-    protected override void AwakeController()
+    protected override void StartController()
     {
-        base.AwakeController();
-
-        inventoryController = gameController.GetController<InventoryController>();
-        playerSpawner = gameController.GetController<PlayerSpawner>();
-        cameraController = gameController.GetController<CameraController>();
-        itemsController = gameController.GetController<ItemsController>();
+        base.StartController();
         
         InitViews();
     }
@@ -31,12 +22,7 @@ public class UIController : ControllerBase
     {
         if (inventoryView != null)
         {
-            inventoryView.Init(this,
-                inventoryController.InventoryContainer,
-                cameraController,
-                playerSpawner,
-                inventoryController,
-                itemsController);
+            inventoryView.Init(this, gameController);
         }
     }
 
@@ -58,6 +44,12 @@ public class UIController : ControllerBase
                 inventoryView.Open();
             }
         }
+    }
+
+    // TODO: change to list of BaseView's
+    public bool IsAnyViewShown()
+    {
+        return inventoryView.IsOpen;
     }
     
     public void SetBlurState(bool state)

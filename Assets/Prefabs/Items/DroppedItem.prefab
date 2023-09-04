@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clusterId: 
-  promptOffset: {x: 0, y: 1, z: 0}
+  promptOffset: {x: 0, y: 0.65, z: 0}
   interactKey: 101
   interactActionName: Pick up
 --- !u!135 &9218410037968448963
