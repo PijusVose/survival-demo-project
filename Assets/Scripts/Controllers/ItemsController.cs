@@ -66,15 +66,31 @@ public class ItemsController : ControllerBase
            dropOrigin += new Vector3(xOffset, 0f, zOffset);
        }
 
-       var dropPosition = GetDropPosition(dropOrigin);
-       var itemDrop = itemsPooler.GetItemDrop(item);
-       itemDrop.Setup(closestCluster.ClusterId, item, dropPosition);
-
-       container.RemoveItemFromContainer(item, amount, itemDrop);
-       
+       var itemDrop = GenerateItemDrop(closestCluster, item, amount, dropOrigin);
        closestCluster.AddItem(itemDrop);
+       
+       container.RemoveItemFromContainer(item, amount, itemDrop);
    }
 
+   private ItemDrop GenerateItemDrop(ItemCluster itemCluster, Item item, int amount, Vector3 dropOrigin)
+   {
+       var dropPosition = GetDropPosition(dropOrigin);
+       var itemDrop = itemsPooler.GetItemDrop(item);
+       
+       if (item.ItemStack != amount)
+       {
+           var copyOfItem = new Item(item.ItemConfig, amount);
+           
+           itemDrop.Setup(itemCluster.ClusterId, copyOfItem, dropPosition);
+       }
+       else
+       {
+           itemDrop.Setup(itemCluster.ClusterId, item, dropPosition);
+       }
+
+       return itemDrop;
+   }
+   
    private Vector3 GetDropPosition(Vector3 startPosition)
    {
        startPosition += new Vector3(0f, 0.5f, 0f);
